@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐂 Rural Bioenergia — Simulador de Ciclo Completo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0f0a;color:#d0d8d0;font-family:system-ui,sans-serif;font-size:14px}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+
+/* ── Layout ── */
+.header{background:#0d1a0d;border-bottom:2px solid #1a3a1a;padding:14px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.header-logo{font-size:26px}
+.header-title{font-weight:800;font-size:17px;color:#7bc67e}
+.header-sub{font-size:11px;color:#3a5a3a;margin-top:2px}
+.nav{background:#0d1a0d;border-bottom:1px solid #1a3a1a;display:flex;overflow-x:auto;padding:0 20px;gap:0}
+.nav-btn{background:none;border:none;border-bottom:3px solid transparent;padding:10px 16px;font-size:12px;font-weight:600;color:#3a5a3a;cursor:pointer;white-space:nowrap;transition:all .2s}
+.nav-btn.active{color:#7bc67e;border-bottom-color:#7bc67e}
+.page{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.page.active{display:block}
+
+/* ── Cards ── */
+.card{background:#0d1a0d;border:1px solid #1a3a1a;border-radius:12px;padding:16px;margin-bottom:14px}
+.card-title{font-size:10px;font-weight:700;color:#3a6a3a;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #1a3a1a;display:flex;align-items:center;justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+
+/* ── Inputs ── */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:#3a6a3a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.inp-wrap{display:flex;align-items:stretch}
+.inp-pre,.inp-suf{background:#071007;border:1px solid #1a3a1a;padding:7px 10px;color:#3a6a3a;font-size:12px;font-weight:600;flex-shrink:0}
+.inp-pre{border-right:none;border-radius:7px 0 0 7px}
+.inp-suf{border-left:none;border-radius:0 7px 7px 0}
+input[type=number]{flex:1;background:#071007;border:1px solid #1a3a1a;padding:7px 10px;color:#c8e6c8;font-size:13px;font-weight:600;outline:none;min-width:0;border-radius:7px;transition:border-color .2s}
+input[type=number]:focus{border-color:#3a8a3a}
+input[type=number].has-pre{border-radius:0 7px 7px 0}
+input[type=number].has-suf{border-radius:7px 0 0 7px}
+
+/* ── Botões +/- ── */
+.btn-wrap{display:flex;align-items:stretch;gap:0}
+.btn-pm{background:#0d1a0d;border:1px solid #1a3a1a;color:#7bc67e;font-size:16px;font-weight:700;padding:0 10px;cursor:pointer;flex-shrink:0;line-height:1;transition:background .15s}
+.btn-pm:first-child{border-radius:7px 0 0 7px;border-right:none}
+.btn-pm:last-child{border-radius:0 7px 7px 0;border-left:none}
+.btn-pm:hover{background:#1a3a1a}
+.btn-wrap input[type=number]{border-radius:0;border-left:none;border-right:none}
+.btn-wrap .inp-suf{border-radius:0;border-left:none}
+
+/* ── KPIs ── */
+.kpi{margin-bottom:10px}
+.kpi-l{font-size:10px;color:#3a6a3a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px}
+.kpi-v{font-weight:700;font-family:monospace;font-size:18px;color:#c8e6c8}
+.kpi-v.sm{font-size:14px}
+.kpi-v.lg{font-size:24px}
+.kpi-v.xl{font-size:30px}
+.green{color:#7bc67e!important}
+.red{color:#e07070!important}
+.gold{color:#c8a84b!important}
+.blue{color:#7ab3e0!important}
+.muted{color:#3a6a3a!important}
+
+/* ── Banners de resultado ── */
+.banner{border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.banner.ok{background:linear-gradient(135deg,#071a07,#0d2a0d);border:1px solid #2a5a2a}
+.banner.warn{background:linear-gradient(135deg,#1a1400,#2a2000);border:1px solid #5a4a10}
+.banner.bad{background:linear-gradient(135deg,#1a0707,#2a0d0d);border:1px solid #5a2020}
+.banner-item .bl{font-size:10px;color:#3a6a3a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.banner-item .bv{font-weight:800;font-family:monospace}
+
+/* ── Decisão ── */
+.decisao{background:linear-gradient(135deg,#0a0f0a,#0d1a0d);border:2px solid #2a5a2a;border-radius:14px;padding:18px;margin:20px 0}
+.decisao-title{font-size:13px;font-weight:800;color:#7bc67e;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.be-box{background:#071007;border:1px solid #1a3a1a;border-radius:10px;padding:12px 16px;text-align:center;margin:12px 0}
+.be-num{font-size:38px;font-weight:800;font-family:monospace;color:#c8a84b}
+.be-label{font-size:10px;color:#3a6a3a;text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
+
+/* ── Zona visual ── */
+.zona{position:relative;height:44px;border-radius:9px;overflow:hidden;background:#111;margin:10px 0}
+
+/* ── Detalhes colapsáveis ── */
+.collapse-btn{background:none;border:1px solid #1a3a1a;border-radius:6px;color:#3a8a3a;font-size:11px;padding:4px 10px;cursor:pointer;transition:all .2s}
+.collapse-btn:hover{background:#1a3a1a}
+.collapse-content{display:none;margin-top:12px;padding-top:12px;border-top:1px solid #1a3a1a}
+.collapse-content.open{display:block}
+
+/* ── Linha de custo ── */
+.cost-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #111;font-size:12px}
+.cost-row:last-child{border-bottom:none}
+.cost-label{color:#5a8a5a}
+.cost-val{font-family:monospace;font-weight:700;color:#c8e6c8}
+
+/* ── Sensibilidade ── */
+.sens-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:12px}
+.sens-label{color:#5a8a5a;font-family:monospace}
+.sens-vals{display:flex;gap:14px}
+.sens-val{font-family:monospace;font-weight:700;text-align:right;min-width:80px}
+
+/* ── Fluxo de caixa ── */
+.fluxo-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.fluxo-label{font-size:11px;color:#5a8a5a;min-width:120px;font-family:monospace}
+.fluxo-bar-wrap{flex:1;height:22px;background:#071007;border-radius:5px;overflow:hidden;position:relative}
+.fluxo-bar{height:100%;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:700;font-family:monospace;color:#000}
+.fluxo-val{font-size:11px;font-family:monospace;font-weight:700;min-width:90px;text-align:right}
+
+/* ── Hr ── */
+.hr{height:1px;background:#1a3a1a;margin:12px 0}
+
+/* ── Responsivo ── */
+@media(max-width:700px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .page{padding:12px}
+}
+
+/* ── Select tipo ── */
+select{background:#071007;border:1px solid #1a3a1a;color:#c8e6c8;padding:7px 10px;border-radius:7px;font-size:13px;width:100%;outline:none}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🐂</div>
+  <div>
+    <div class="header-title">Rural Bioenergia S.A. — Simulador de Ciclo Completo</div>
+    <div class="header-sub">Bezerro → Recria → Decisão → Confinamento → Resultado</div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="nav('global')">⚙️ Global</button>
+  <button class="nav-btn" onclick="nav('bezerro')">🐮 Bezerro</button>
+  <button class="nav-btn" onclick="nav('recria')">🌿 Recria</button>
+  <button class="nav-btn" onclick="nav('decisao1')">⚖️ Decisão 1</button>
+  <button class="nav-btn" onclick="nav('confinamento')">🏭 Confinamento</button>
+  <button class="nav-btn" onclick="nav('decisao2')">⚖️ Decisão 2</button>
+  <button class="nav-btn" onclick="nav('resultado')">📊 Resultado Final</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: GLOBAL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-global" class="page active">
+  <div class="card">
+    <div class="card-title">⚙️ Parâmetros Globais da Operação</div>
+    <div class="grid3">
+      <div>
+        <div class="field"><label>Câmbio (₲/US$)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_cambio',-50)">−</button><input type="number" id="g_cambio" value="6200" step="50" oninput="calc()"><button class="btn-pm" onclick="adj('g_cambio',50)">+</button></div></div>
+        <div class="field"><label>Juros anual (%) — custo do capital</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_juros',-0.5)">−</button><input type="number" id="g_juros" value="7" step="0.5" oninput="calc()"><button class="btn-pm" onclick="adj('g_juros',0.5)">+</button></div></div>
+        <div class="field"><label>TMA (%) — retorno mínimo exigido</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_tma',-0.5)">−</button><input type="number" id="g_tma" value="12" step="0.5" oninput="calc()"><button class="btn-pm" onclick="adj('g_tma',0.5)">+</button></div></div>
+        <div class="field"><label>Preço carne referência (US$/kg PV)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_preco_ref',-0.05)">−</button><input type="number" id="g_preco_ref" value="3.00" step="0.05" oninput="calc()"><button class="btn-pm" onclick="adj('g_preco_ref',0.05)">+</button></div></div>
+      </div>
+      <div>
+        <div class="field"><label>Mortalidade recria (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_mort_recria',-0.1)">−</button><input type="number" id="g_mort_recria" value="1.5" step="0.1" oninput="calc()"><button class="btn-pm" onclick="adj('g_mort_recria',0.1)">+</button></div></div>
+        <div class="field"><label>Mortalidade confinamento (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_mort_conf',-0.1)">−</button><input type="number" id="g_mort_conf" value="0.5" step="0.1" oninput="calc()"><button class="btn-pm" onclick="adj('g_mort_conf',0.1)">+</button></div></div>
+        <div class="field"><label>Escala recria (cab/ano)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_escala_r',-1000)">−</button><input type="number" id="g_escala_r" value="40000" step="1000" oninput="calc()"><button class="btn-pm" onclick="adj('g_escala_r',1000)">+</button></div></div>
+      </div>
+      <div>
+        <div class="field"><label>Escala confinamento (cab/ciclo)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_escala_c',-1000)">−</button><input type="number" id="g_escala_c" value="25000" step="1000" oninput="calc()"><button class="btn-pm" onclick="adj('g_escala_c',1000)">+</button></div></div>
+        <div class="field"><label>Ciclos confinamento/ano</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('g_ciclos',-0.5)">−</button><input type="number" id="g_ciclos" value="3" step="0.5" oninput="calc()"><button class="btn-pm" onclick="adj('g_ciclos',0.5)">+</button></div></div>
+        <div class="field"><label>Tipo de entrada confinamento</label>
+          <select id="g_tipo_entrada" onchange="calc()">
+            <option value="proprio">Próprio (saída da recria)</option>
+            <option value="compra">Compra direta (recriado)</option>
+            <option value="misto">Misto (próprio + compra)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Resumo do Ciclo Completo</div>
+    <div class="grid4">
+      <div class="kpi"><div class="kpi-l">Custo entrada bezerro</div><div class="kpi-v green" id="g_res_entrada">—</div></div>
+      <div class="kpi"><div class="kpi-l">Resultado recria/cab</div><div class="kpi-v" id="g_res_recria">—</div></div>
+      <div class="kpi"><div class="kpi-l">Resultado confinamento/cab</div><div class="kpi-v" id="g_res_conf">—</div></div>
+      <div class="kpi"><div class="kpi-l">Resultado ciclo completo/cab</div><div class="kpi-v xl" id="g_res_total">—</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="grid4">
+      <div class="kpi"><div class="kpi-l">Custo do capital (juros)</div><div class="kpi-v lg muted" id="g_juros_disp">—</div></div>
+      <div class="kpi"><div class="kpi-l">TMA (retorno exigido)</div><div class="kpi-v lg gold" id="g_tma_disp">—</div></div>
+      <div class="kpi"><div class="kpi-l">TIR anualizada</div><div class="kpi-v lg" id="g_tir">—</div></div>
+      <div class="kpi"><div class="kpi-l">TIR vs TMA</div><div class="kpi-v lg" id="g_tir_vs_tma">—</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="grid4">
+      <div class="kpi"><div class="kpi-l">ROE ciclo (%)</div><div class="kpi-v lg" id="g_roe">—</div></div>
+      <div class="kpi"><div class="kpi-l">VPL (descontado pela TMA)</div><div class="kpi-v lg" id="g_vpl">—</div></div>
+      <div class="kpi"><div class="kpi-l">Payback (meses)</div><div class="kpi-v lg" id="g_payback">—</div></div>
+      <div class="kpi"><div class="kpi-l">Duração do ciclo</div><div class="kpi-v lg muted" id="g_payback2">—</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="grid4">
+      <div class="kpi"><div class="kpi-l">Resultado total escala recria</div><div class="kpi-v gold" id="g_tot_recria">—</div></div>
+      <div class="kpi"><div class="kpi-l">Resultado total escala conf.</div><div class="kpi-v gold" id="g_tot_conf">—</div></div>
+      <div class="kpi"><div class="kpi-l">Capital imobilizado total</div><div class="kpi-v muted" id="g_cap_imob">—</div></div>
+      <div class="kpi"><div class="kpi-l">Duração total do ciclo</div><div class="kpi-v muted" id="g_duracao">—</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: BEZERRO -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-bezerro" class="page">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">🐮 Compra do Bezerro</div>
+        <div class="field"><label>Peso de entrada (kg)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('b_peso',-5)">−</button><input type="number" id="b_peso" value="180" step="5" oninput="calc()"><button class="btn-pm" onclick="adj('b_peso',5)">+</button></div></div>
+        <div class="field"><label>Preço compra (₲/kg PV)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('b_preco_pyg',-500)">−</button><input type="number" id="b_preco_pyg" value="19000" step="500" oninput="calc()"><button class="btn-pm" onclick="adj('b_preco_pyg',500)">+</button></div></div>
+        <div class="field"><label>Frete (US$/cab)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('b_frete',-1)">−</button><input type="number" id="b_frete" value="15" step="1" oninput="calc()"><button class="btn-pm" onclick="adj('b_frete',1)">+</button></div></div>
+        <div class="field"><label>Comissão (US$/cab)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('b_comissao',-1)">−</button><input type="number" id="b_comissao" value="10" step="1" oninput="calc()"><button class="btn-pm" onclick="adj('b_comissao',1)">+</button></div></div>
+        <div class="field"><label>Veterinário entrada (US$/cab)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('b_vet',-1)">−</button><input type="number" id="b_vet" value="5" step="1" oninput="calc()"><button class="btn-pm" onclick="adj('b_vet',1)">+</button></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">💰 Resultado da Compra</div>
+        <div class="kpi"><div class="kpi-l">Preço em US$/kg PV</div><div class="kpi-v lg green" id="b_preco_usd">—</div></div>
+        <div class="kpi"><div class="kpi-l">Custo do animal</div><div class="kpi-v lg" id="b_custo_animal">—</div></div>
+        <div class="hr"></div>
+        <div class="cost-row"><span class="cost-label">+ Frete</span><span class="cost-val" id="b_out_frete">—</span></div>
+        <div class="cost-row"><span class="cost-label">+ Comissão</span><span class="cost-val" id="b_out_comissao">—</span></div>
+        <div class="cost-row"><span class="cost-label">+ Veterinário entrada</span><span class="cost-val" id="b_out_vet">—</span></div>
+        <div class="hr"></div>
+        <div class="kpi"><div class="kpi-l">Custo total de entrada</div><div class="kpi-v xl red" id="b_custo_total">—</div></div>
+        <div class="hr"></div>
+        <div class="kpi"><div class="kpi-l">Ágio sobre preço de venda esperado</div><div class="kpi-v lg" id="b_agio">—</div></div>
+        <div class="kpi"><div class="kpi-l">Custo/kg de entrada</div><div class="kpi-v sm muted" id="b_custo_kg">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: RECRIA -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-recria" class="page">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">🌿 Desempenho Zootécnico</div>
+        <div class="field"><label>GMD (kg/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_gmd',-0.01)">−</button><input type="number" id="r_gmd" value="0.490" step="0.01" oninput="calc()"><button class="btn-pm" onclick="adj('r_gmd',0.01)">+</button></div></div>
+        <div class="field"><label>Período (dias)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_dias',-10)">−</button><input type="number" id="r_dias" value="400" step="10" oninput="calc()"><button class="btn-pm" onclick="adj('r_dias',10)">+</button></div></div>
+        <div class="field"><label>Lotação (UA/ha)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_lotacao',-0.1)">−</button><input type="number" id="r_lotacao" value="2.1" step="0.1" oninput="calc()"><button class="btn-pm" onclick="adj('r_lotacao',0.1)">+</button></div></div>
+        <div class="field"><label>Área total (ha)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_area',-100)">−</button><input type="number" id="r_area" value="2580" step="100" oninput="calc()"><button class="btn-pm" onclick="adj('r_area',100)">+</button></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💸 Custos Operacionais <button class="collapse-btn" onclick="toggle('r_det')">▶ Detalhar</button></div>
+        <div class="field"><label>Custo total (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_custo_total',-0.5)">−</button><input type="number" id="r_custo_total" value="12.13" step="0.5" oninput="syncR();calc()"><button class="btn-pm" onclick="adj('r_custo_total',0.5)">+</button></div></div>
+        <div class="collapse-content" id="r_det">
+          <div class="field"><label>Salários e encargos (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_sal',-0.05,'r_custo_total')">−</button><input type="number" id="r_d_sal" value="0.98" step="0.05" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_sal',0.05,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Nutrição/suplementação (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_nutri',-0.1,'r_custo_total')">−</button><input type="number" id="r_d_nutri" value="4.54" step="0.1" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_nutri',0.1,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Sanidade (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_san',-0.05,'r_custo_total')">−</button><input type="number" id="r_d_san" value="0.15" step="0.05" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_san',0.05,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Manutenção pastagens (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_past',-0.05,'r_custo_total')">−</button><input type="number" id="r_d_past" value="1.18" step="0.05" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_past',0.05,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Manutenção estrutura (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_est',-0.05,'r_custo_total')">−</button><input type="number" id="r_d_est" value="0.17" step="0.05" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_est',0.05,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Serviços profissionais (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_serv',-0.05,'r_custo_total')">−</button><input type="number" id="r_d_serv" value="0.38" step="0.05" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_serv',0.05,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Arrendamento (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_arr',-0.1,'r_custo_total')">−</button><input type="number" id="r_d_arr" value="3.61" step="0.1" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_arr',0.1,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Imprevistos/outros (US$/cab/mês)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjD('r_d_imp',-0.05,'r_custo_total')">−</button><input type="number" id="r_d_imp" value="1.10" step="0.05" oninput="sumR()"><button class="btn-pm" onclick="adjD('r_d_imp',0.05,'r_custo_total')">+</button></div></div>
+          <div class="field"><label>Arrendamento — modo</label>
+            <select id="r_arr_modo" onchange="calc()">
+              <option value="fixo">Fixo (US$/cab/mês)</option>
+              <option value="kg_carne" selected>Indexado (kg carne/ha/ano)</option>
+            </select>
+          </div>
+          <div class="field" id="r_arr_kg_field"><label>Arrendamento indexado (kg carne/ha/ano)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_arr_kg',-1)">−</button><input type="number" id="r_arr_kg" value="30" step="1" oninput="calc()"><button class="btn-pm" onclick="adj('r_arr_kg',1)">+</button></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💲 Preço de Saída</div>
+        <div class="field"><label>Preço venda magro (US$/kg PV)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('r_preco_venda',-0.05)">−</button><input type="number" id="r_preco_venda" value="3.00" step="0.05" oninput="calc()"><button class="btn-pm" onclick="adj('r_preco_venda',0.05)">+</button></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">⚖️ Indicadores Zootécnicos</div>
+        <div class="grid2">
+          <div>
+            <div class="kpi"><div class="kpi-l">Peso entrada</div><div class="kpi-v" id="r_z_entrada">—</div></div>
+            <div class="kpi"><div class="kpi-l">Peso saída</div><div class="kpi-v green" id="r_z_saida">—</div></div>
+            <div class="kpi"><div class="kpi-l">GPV total</div><div class="kpi-v" id="r_z_gpv">—</div></div>
+            <div class="kpi"><div class="kpi-l">GMD</div><div class="kpi-v sm" id="r_z_gmd">—</div></div>
+          </div>
+          <div>
+            <div class="kpi"><div class="kpi-l">Período</div><div class="kpi-v sm" id="r_z_periodo">—</div></div>
+            <div class="kpi"><div class="kpi-l">Cabeças estimadas</div><div class="kpi-v sm gold" id="r_z_cabs">—</div></div>
+            <div class="kpi"><div class="kpi-l">Mortes estimadas</div><div class="kpi-v sm red" id="r_z_mortes">—</div></div>
+            <div class="kpi"><div class="kpi-l">Saída para confinamento</div><div class="kpi-v sm green" id="r_z_saida_cab">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💰 Resultado Econômico / Cabeça</div>
+        <div class="cost-row"><span class="cost-label">Receita de venda</span><span class="cost-val green" id="r_e_receita">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Custo de entrada (bezerro)</span><span class="cost-val red" id="r_e_entrada">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Custo operacional período</span><span class="cost-val red" id="r_e_op">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Juros sobre animal</span><span class="cost-val red" id="r_e_juros">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Mortalidade</span><span class="cost-val red" id="r_e_mort">—</span></div>
+        <div class="hr"></div>
+        <div class="kpi"><div class="kpi-l">Lucro líquido / cabeça</div><div class="kpi-v xl" id="r_e_lucro">—</div></div>
+        <div class="hr"></div>
+        <div class="grid2">
+          <div>
+            <div class="kpi"><div class="kpi-l">Margem (%)</div><div class="kpi-v sm" id="r_e_margem">—</div></div>
+            <div class="kpi"><div class="kpi-l">ROE ciclo (%)</div><div class="kpi-v sm" id="r_e_roe">—</div></div>
+          </div>
+          <div>
+            <div class="kpi"><div class="kpi-l">ROE anualizado (%)</div><div class="kpi-v sm" id="r_e_roe_aa">—</div></div>
+            <div class="kpi"><div class="kpi-l">Custo total/cab</div><div class="kpi-v sm red" id="r_e_custo_total">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📏 Impacto do GMD</div>
+        <div id="r_impacto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: DECISÃO 1 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-decisao1" class="page">
+  <div class="decisao">
+    <div class="decisao-title">⚖️ Decisão 1 — Vendo o Magro ou Confino?</div>
+    <div class="grid2">
+      <div>
+        <div class="be-box">
+          <div class="be-label">Break-even — Preço mínimo para confinar valer mais</div>
+          <div class="be-num" id="d1_be_preco">—</div>
+          <div style="font-size:11px;color:#3a6a3a;margin-top:4px">US$/kg PV no gordo</div>
+        </div>
+        <div id="d1_zona" style="margin:0"></div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-title">Cenário Atual</div>
+          <div class="cost-row"><span class="cost-label">Lucro vendendo magro agora</span><span class="cost-val green" id="d1_lucro_magro">—</span></div>
+          <div class="cost-row"><span class="cost-label">Lucro esperado confinando</span><span class="cost-val" id="d1_lucro_conf">—</span></div>
+          <div class="cost-row"><span class="cost-label">Diferença (confinar − vender)</span><span class="cost-val" id="d1_diff">—</span></div>
+          <div class="hr"></div>
+          <div class="kpi"><div class="kpi-l">Recomendação</div><div class="kpi-v lg" id="d1_rec">—</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">📊 Análise de Sensibilidade — Preço do Gordo</div>
+          <div id="d1_sens"></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-title">💡 Fatores que favorecem confinar</div>
+          <div id="d1_fatores"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: CONFINAMENTO -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-confinamento" class="page">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">🏭 Desempenho Zootécnico</div>
+        <div class="field"><label>Peso de entrada confinamento (kg)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_peso_ini',-5)">−</button><input type="number" id="c_peso_ini" value="376" step="5" oninput="calc()"><button class="btn-pm" onclick="adj('c_peso_ini',5)">+</button></div></div>
+        <div class="field"><label>GMD confinamento (kg/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_gmd',-0.05)">−</button><input type="number" id="c_gmd" value="1.40" step="0.05" oninput="calc()"><button class="btn-pm" onclick="adj('c_gmd',0.05)">+</button></div></div>
+        <div class="field"><label>Dias de trato</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_dias',-5)">−</button><input type="number" id="c_dias" value="120" step="5" oninput="calc()"><button class="btn-pm" onclick="adj('c_dias',5)">+</button></div></div>
+        <div class="field"><label>Rendimento de carcaça inicial (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_rend_ini',-0.5)">−</button><input type="number" id="c_rend_ini" value="50" step="0.5" oninput="calc()"><button class="btn-pm" onclick="adj('c_rend_ini',0.5)">+</button></div></div>
+        <div class="field"><label>Rendimento de carcaça final (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_rend_fim',-0.5)">−</button><input type="number" id="c_rend_fim" value="56" step="0.5" oninput="calc()"><button class="btn-pm" onclick="adj('c_rend_fim',0.5)">+</button></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌾 Nutrição <button class="collapse-btn" onclick="toggle('c_det_nutri')">▶ Detalhar</button></div>
+        <div class="field"><label>Consumo MS (kg/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_cons_ms',-0.5)">−</button><input type="number" id="c_cons_ms" value="10.7" step="0.5" oninput="calc()"><button class="btn-pm" onclick="adj('c_cons_ms',0.5)">+</button></div></div>
+        <div class="field"><label>Custo MS (US$/kg MS)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_custo_ms',-0.01)">−</button><input type="number" id="c_custo_ms" value="0.22" step="0.01" oninput="calc()"><button class="btn-pm" onclick="adj('c_custo_ms',0.01)">+</button></div></div>
+        <div class="collapse-content" id="c_det_nutri">
+          <div style="font-size:10px;color:#3a6a3a;margin-bottom:8px">Ao detalhar, o Custo MS acima passa a ser a média ponderada pela inclusão (%) de cada componente na dieta.</div>
+          <div class="field"><label>Milho/energia — custo (US$/kg MS)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_ms_milho',-0.01)">−</button><input type="number" id="c_ms_milho" value="0.20" step="0.01" oninput="syncMS()"><button class="btn-pm" onclick="adjMS('c_ms_milho',0.01)">+</button></div></div>
+          <div class="field"><label>Milho — inclusão na dieta (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjMS('c_inc_milho',-5)">−</button><input type="number" id="c_inc_milho" value="55" step="5" oninput="syncMS()"><button class="btn-pm" onclick="adjMS('c_inc_milho',5)">+</button></div></div>
+          <div class="field"><label>Proteico/ureia — custo (US$/kg MS)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjMS('c_ms_prot',-0.01)">−</button><input type="number" id="c_ms_prot" value="0.28" step="0.01" oninput="syncMS()"><button class="btn-pm" onclick="adjMS('c_ms_prot',0.01)">+</button></div></div>
+          <div class="field"><label>Proteico — inclusão na dieta (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjMS('c_inc_prot',-5)">−</button><input type="number" id="c_inc_prot" value="20" step="5" oninput="syncMS()"><button class="btn-pm" onclick="adjMS('c_inc_prot',5)">+</button></div></div>
+          <div class="field"><label>Volumoso/silagem — custo (US$/kg MS)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjMS('c_ms_vol',-0.01)">−</button><input type="number" id="c_ms_vol" value="0.18" step="0.01" oninput="syncMS()"><button class="btn-pm" onclick="adjMS('c_ms_vol',0.01)">+</button></div></div>
+          <div class="field"><label>Volumoso — inclusão na dieta (%)</label><div class="btn-wrap"><button class="btn-pm" onclick="adjMS('c_inc_vol',-5)">−</button><input type="number" id="c_inc_vol" value="25" step="5" oninput="syncMS()"><button class="btn-pm" onclick="adjMS('c_inc_vol',5)">+</button></div></div>
+          <div class="cost-row" style="margin-top:8px"><span class="cost-label">Soma das inclusões</span><span class="cost-val" id="c_inc_soma">—</span></div>
+          <div class="cost-row"><span class="cost-label">Custo MS ponderado calculado</span><span class="cost-val gold" id="c_ms_calc">—</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚙️ Custos Operacionais <button class="collapse-btn" onclick="toggle('c_det_op')">▶ Detalhar</button></div>
+        <div class="field"><label>Custo manejo (US$/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_custo_manejo',-0.05)">−</button><input type="number" id="c_custo_manejo" value="0.32" step="0.05" oninput="calc()"><button class="btn-pm" onclick="adj('c_custo_manejo',0.05)">+</button></div></div>
+        <div class="collapse-content" id="c_det_op">
+          <div class="field"><label>Mão de obra (US$/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_op_mdo',-0.02)">−</button><input type="number" id="c_op_mdo" value="0.15" step="0.02" oninput="calc()"><button class="btn-pm" onclick="adj('c_op_mdo',0.02)">+</button></div></div>
+          <div class="field"><label>Manutenção/energia (US$/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_op_man',-0.02)">−</button><input type="number" id="c_op_man" value="0.10" step="0.02" oninput="calc()"><button class="btn-pm" onclick="adj('c_op_man',0.02)">+</button></div></div>
+          <div class="field"><label>Sanidade (US$/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_op_san',-0.01)">−</button><input type="number" id="c_op_san" value="0.07" step="0.01" oninput="calc()"><button class="btn-pm" onclick="adj('c_op_san',0.01)">+</button></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💲 Preço de Venda</div>
+        <div class="field"><label>Preço gordo (US$/kg carcaça)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_preco_gordo',-0.1)">−</button><input type="number" id="c_preco_gordo" value="5.10" step="0.1" oninput="calc()"><button class="btn-pm" onclick="adj('c_preco_gordo',0.1)">+</button></div></div>
+        <div class="field"><label>Dias frigorífico (espera pós-abate)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('c_dias_frig',-5)">−</button><input type="number" id="c_dias_frig" value="30" step="5" oninput="calc()"><button class="btn-pm" onclick="adj('c_dias_frig',5)">+</button></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">⚖️ Indicadores Zootécnicos</div>
+        <div class="grid2">
+          <div>
+            <div class="kpi"><div class="kpi-l">Peso entrada</div><div class="kpi-v" id="c_z_entrada">—</div></div>
+            <div class="kpi"><div class="kpi-l">Peso saída (vivo)</div><div class="kpi-v green" id="c_z_saida">—</div></div>
+            <div class="kpi"><div class="kpi-l">Carcaça final</div><div class="kpi-v blue" id="c_z_carcaca">—</div></div>
+            <div class="kpi"><div class="kpi-l">Ganho carcaça/dia</div><div class="kpi-v sm" id="c_z_ganho_carc">—</div></div>
+          </div>
+          <div>
+            <div class="kpi"><div class="kpi-l">Consumo MS total</div><div class="kpi-v sm" id="c_z_ms_total">—</div></div>
+            <div class="kpi"><div class="kpi-l">Efic. alimentar (kgMS/kg carc)</div><div class="kpi-v sm" id="c_z_efic">—</div></div>
+            <div class="kpi"><div class="kpi-l">Conv. alimentar (kgMS/kgGPV)</div><div class="kpi-v sm" id="c_z_conv">—</div></div>
+            <div class="kpi"><div class="kpi-l">Mortalidade estimada</div><div class="kpi-v sm red" id="c_z_mort">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💰 Resultado Econômico / Cabeça</div>
+        <div class="cost-row"><span class="cost-label">Receita (kg carc × preço gordo)</span><span class="cost-val green" id="c_e_receita">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Custo de entrada (magro)</span><span class="cost-val red" id="c_e_entrada">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Custo nutricional total</span><span class="cost-val red" id="c_e_nutri">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Custo operacional total</span><span class="cost-val red" id="c_e_op">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Juros sobre animal</span><span class="cost-val red" id="c_e_juros">—</span></div>
+        <div class="cost-row"><span class="cost-label">(-) Mortalidade</span><span class="cost-val red" id="c_e_mort">—</span></div>
+        <div class="hr"></div>
+        <div class="kpi"><div class="kpi-l">Lucro líquido / cabeça</div><div class="kpi-v xl" id="c_e_lucro">—</div></div>
+        <div class="hr"></div>
+        <div class="grid2">
+          <div>
+            <div class="kpi"><div class="kpi-l">Margem sobre receita</div><div class="kpi-v sm" id="c_e_margem">—</div></div>
+            <div class="kpi"><div class="kpi-l">Retorno financeiro (%)</div><div class="kpi-v sm" id="c_e_retorno">—</div></div>
+          </div>
+          <div>
+            <div class="kpi"><div class="kpi-l">Custo diário total/cab</div><div class="kpi-v sm" id="c_e_custo_dia">—</div></div>
+            <div class="kpi"><div class="kpi-l">Custo/kg carcaça prod.</div><div class="kpi-v sm" id="c_e_custo_carc">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: DECISÃO 2 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-decisao2" class="page">
+  <div class="decisao">
+    <div class="decisao-title">⚖️ Decisão 2 — Abato Gordo ou Presto Serviço?</div>
+
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="card" id="d2_card_a">
+        <div class="card-title">🏗️ Estratégia A — Confinar e vender gordo</div>
+        <div class="kpi"><div class="kpi-l">Lucro líquido/cab</div><div class="kpi-v xl" id="d2_a_lucro">—</div></div>
+        <div class="kpi"><div class="kpi-l">Capital imobilizado por animal</div><div class="kpi-v sm muted" id="d2_a_cap">—</div></div>
+        <div class="kpi"><div class="kpi-l">Tempo total até receber</div><div class="kpi-v sm muted" id="d2_a_tempo">—</div></div>
+      </div>
+      <div class="card" id="d2_card_b">
+        <div class="card-title">🤝 Estratégia B — Vender magro + serviço</div>
+        <div class="field"><label>Receita serviço (US$/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('d2_rec_serv',-0.05)">−</button><input type="number" id="d2_rec_serv" value="0.40" step="0.05" oninput="calc()"><button class="btn-pm" onclick="adj('d2_rec_serv',0.05)">+</button></div></div>
+        <div class="field"><label>Custo serviço (US$/cab/dia)</label><div class="btn-wrap"><button class="btn-pm" onclick="adj('d2_custo_serv',-0.05)">−</button><input type="number" id="d2_custo_serv" value="0.25" step="0.05" oninput="calc()"><button class="btn-pm" onclick="adj('d2_custo_serv',0.05)">+</button></div></div>
+        <div class="kpi"><div class="kpi-l">Margem serviço/cab (período)</div><div class="kpi-v lg green" id="d2_b_margem">—</div></div>
+        <div class="kpi"><div class="kpi-l">+ Capital liberado imediatamente</div><div class="kpi-v sm gold" id="d2_b_capital">—</div></div>
+      </div>
+    </div>
+
+    <div class="be-box">
+      <div class="be-label">Break-even — Preço gordo onde A = B</div>
+      <div class="be-num" id="d2_be">—</div>
+      <div style="font-size:11px;color:#3a6a3a;margin-top:4px">US$/kg de carcaça</div>
+    </div>
+    <div id="d2_zona"></div>
+    <div class="kpi" style="text-align:center;margin-top:10px"><div class="kpi-v lg" id="d2_rec">—</div></div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">📊 Sensibilidade — Preço do Gordo vs Resultado</div>
+      <div id="d2_sens"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PÁGINA: RESULTADO FINAL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-resultado" class="page">
+  <div class="card">
+    <div class="card-title">💎 Resultado do Ciclo Completo — Por Cabeça</div>
+    <div id="res_banner"></div>
+    <div class="grid4" style="margin-top:14px">
+      <div class="kpi"><div class="kpi-l">VPL (descontado pela TMA)</div><div class="kpi-v lg" id="res_vpl">—</div></div>
+      <div class="kpi"><div class="kpi-l">TIR anualizada</div><div class="kpi-v lg gold" id="res_tir">—</div></div>
+      <div class="kpi"><div class="kpi-l">TMA exigida</div><div class="kpi-v lg" id="res_tma">—</div></div>
+      <div class="kpi"><div class="kpi-l">Payback (meses)</div><div class="kpi-v lg" id="res_payback">—</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="kpi" style="text-align:center"><div class="kpi-v lg" id="res_veredito">—</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📈 Fluxo de Caixa — Ciclo Completo / Cabeça</div>
+    <div id="res_fluxo"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏢 Resultado por Escala</div>
+    <div class="grid2">
+      <div>
+        <div style="font-size:11px;color:#3a6a3a;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px">Recria (escala anual)</div>
+        <div class="kpi"><div class="kpi-l">Cabeças/ano</div><div class="kpi-v sm" id="res_r_cabs">—</div></div>
+        <div class="kpi"><div class="kpi-l">Resultado total</div><div class="kpi-v lg gold" id="res_r_total">—</div></div>
+        <div class="kpi"><div class="kpi-l">Capital imobilizado</div><div class="kpi-v sm muted" id="res_r_cap">—</div></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#3a6a3a;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px">Confinamento (por ciclo)</div>
+        <div class="kpi"><div class="kpi-l">Cabeças/ciclo</div><div class="kpi-v sm" id="res_c_cabs">—</div></div>
+        <div class="kpi"><div class="kpi-l">Resultado total</div><div class="kpi-v lg gold" id="res_c_total">—</div></div>
+        <div class="kpi"><div class="kpi-l">Capital imobilizado</div><div class="kpi-v sm muted" id="res_c_cap">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📉 Análise de Sensibilidade — Variáveis Críticas</div>
+    <div style="display:flex;gap:10px;margin-bottom:10px;font-size:10px;color:#3a6a3a;font-family:monospace;text-transform:uppercase;letter-spacing:.8px">
+      <span style="min-width:180px">Variável</span>
+      <span style="min-width:90px;text-align:right">Pessimista −12%</span>
+      <span style="min-width:90px;text-align:right">Base</span>
+      <span style="min-width:90px;text-align:right">Otimista +12%</span>
+    </div>
+    <div id="res_sens"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚠️ Riscos e Variáveis Críticas</div>
+    <div id="res_riscos"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════
+function v(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function el(id){return document.getElementById(id);}
+function set(id,html){var e=el(id);if(e)e.innerHTML=html;}
+function setClass(id,cls){var e=el(id);if(e){e.className=e.className.replace(/\b(green|red|gold|blue|muted)\b/g,'').trim();if(cls)e.classList.add(cls);}}
+function money(n,d){d=d===undefined?2:d;return'$'+Math.abs(n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function moneyS(n){return(n>=0?'+':'-')+money(n);}
+function pct(n,d){d=d===undefined?2:d;return n.toFixed(d)+'%';}
+function kg(n,d){d=d===undefined?1:d;return n.toFixed(d)+' kg';}
+function kvm(id,val,cls,suf){var e=el(id);if(!e)return;e.textContent=(suf||'')+val;e.className='kpi-v '+(cls||'');}
+function cor(v){return v>=0?'green':'red';}
+function moneyK(n){if(Math.abs(n)>=1000000)return'$'+(n/1000000).toFixed(2)+'M';if(Math.abs(n)>=1000)return'$'+(n/1000).toFixed(1)+'k';return money(n);}
+
+function adj(id,step){var e=el(id);if(!e)return;var v=parseFloat(e.value)||0;e.value=(v+step).toFixed(Math.max(0,step.toString().split('.')[1]?.length||0));calc();}
+function adjD(id,step,sumId){adj(id,step);sumR();}
+
+function toggle(id){var e=el(id);if(!e)return;e.classList.toggle('open');}
+function sumR(){
+  var total=['r_d_sal','r_d_nutri','r_d_san','r_d_past','r_d_est','r_d_serv','r_d_arr','r_d_imp'].reduce(function(a,i){return a+v(i);},0);
+  var e=el('r_custo_total');if(e)e.value=total.toFixed(2);
+  calc();
+}
+function syncR(){calc();}
+
+// Nutrição: recalcula Custo MS como média ponderada pela inclusão
+function syncMS(){
+  var incM=v('c_inc_milho'),incP=v('c_inc_prot'),incV=v('c_inc_vol');
+  var soma=incM+incP+incV;
+  var somaEl=el('c_inc_soma');
+  if(somaEl){somaEl.textContent=soma.toFixed(0)+'%';somaEl.className='cost-val '+(Math.abs(soma-100)<0.5?'green':'red');}
+  if(soma>0){
+    var msCalc=(v('c_ms_milho')*incM+v('c_ms_prot')*incP+v('c_ms_vol')*incV)/soma;
+    var calcEl=el('c_ms_calc');if(calcEl)calcEl.textContent='
+
+function nav(page){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  var pg=el('page-'+page);if(pg)pg.classList.add('active');
+  var btn=document.querySelector('[onclick="nav(\''+page+'\')"]');if(btn)btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// CÁLCULO PRINCIPAL
+// ════════════════════════════════════════════════
+function calc(){
+  var cambio=v('g_cambio')||1;
+  var jurosAA=v('g_juros')/100;
+  var tma=v('g_tma')/100; // Taxa Mínima de Atratividade — premissa de decisão independente
+  var mortRecria=v('g_mort_recria')/100;
+  var mortConf=v('g_mort_conf')/100;
+  var escalaR=v('g_escala_r');
+  var escalaC=v('g_escala_c');
+
+  // ── BEZERRO ──
+  var bPeso=v('b_peso');
+  var bPrecoPyg=v('b_preco_pyg');
+  var bFrete=v('b_frete');
+  var bComissao=v('b_comissao');
+  var bVet=v('b_vet');
+  var bPrecoUsd=bPrecoPyg/cambio;
+  var bCustoAnimal=bPeso*bPrecoUsd;
+  var bCustoTotal=bCustoAnimal+bFrete+bComissao+bVet;
+  var rPrecoVenda=v('r_preco_venda');
+  var bAgio=rPrecoVenda>0?((bPrecoUsd-rPrecoVenda)/rPrecoVenda)*100:0;
+
+  el('b_preco_usd').textContent='$'+bPrecoUsd.toFixed(2)+'/kg PV';
+  el('b_custo_animal').textContent=money(bCustoAnimal);
+  el('b_out_frete').textContent=money(bFrete);
+  el('b_out_comissao').textContent=money(bComissao);
+  el('b_out_vet').textContent=money(bVet);
+  el('b_custo_total').textContent=money(bCustoTotal);
+  var agioEl=el('b_agio');
+  agioEl.textContent=(bAgio>0?'+':'')+pct(bAgio)+' '+(bAgio>0?'⚠️ comprou acima':'✅ comprou abaixo');
+  agioEl.className='kpi-v lg '+(bAgio>0?'gold':'green');
+  el('b_custo_kg').textContent='$'+( bCustoTotal/bPeso).toFixed(2)+'/kg entrada';
+
+  // ── RECRIA ──
+  var rGmd=v('r_gmd');
+  var rDias=v('r_dias');
+  var rCustoMes=v('r_custo_total');
+  var rMeses=rDias/30.5;
+  var rPesoSaida=bPeso+rGmd*rDias;
+  var rGpv=rPesoSaida-bPeso;
+  var rCabsEntrada=v('r_area')*v('r_lotacao');
+  var rMortes=Math.round(rCabsEntrada*mortRecria);
+  var rCabsSaida=rCabsEntrada-rMortes;
+
+  // Arrendamento indexado
+  var arrModo=el('r_arr_modo')?.value||'fixo';
+  var arrKgField=el('r_arr_kg_field');
+  if(arrKgField)arrKgField.style.display=arrModo==='kg_carne'?'':'none';
+  var arrCustoMes=rCustoMes;
+  if(arrModo==='kg_carne'){
+    var arrKg=v('r_arr_kg');
+    var arrUsdHaAno=arrKg*rPrecoVenda;
+    var arrUsdHaMes=arrUsdHaAno/12;
+    var arrUsdCabMes=rCabsEntrada>0?(arrUsdHaMes*v('r_area'))/rCabsEntrada:0;
+    // Substitui componente de arrendamento no total
+    arrCustoMes=rCustoMes-v('r_d_arr')+arrUsdCabMes;
+  }
+
+  var rCustoOp=arrCustoMes*rMeses;
+  var rJuros=bCustoTotal*jurosAA*(rDias/365);
+  var rMortValor=bCustoTotal*mortRecria;
+  var rReceita=rPesoSaida*rPrecoVenda; // preço de transferência (valor do magro)
+  var rCustoTotalCab=bCustoTotal+rCustoOp+rJuros+rMortValor;
+  var rLucro=rReceita-rCustoTotalCab;
+  var rMargem=rReceita>0?(rLucro/rReceita)*100:0;
+  var rRoe=bCustoTotal>0?(rLucro/bCustoTotal)*100:0;
+  var rRoeAa=(rDias>0)?rRoe/(rDias/365):0;
+
+  el('r_z_entrada').textContent=kg(bPeso);
+  var rSaidaEl=el('r_z_saida');rSaidaEl.textContent=kg(rPesoSaida);rSaidaEl.className='kpi-v green';
+  el('r_z_gpv').textContent=kg(rGpv);
+  el('r_z_gmd').textContent=rGmd.toFixed(3)+' kg/dia';
+  el('r_z_periodo').textContent=rDias+'d / '+rMeses.toFixed(1)+'m';
+  el('r_z_cabs').textContent=Math.round(rCabsEntrada).toLocaleString('pt-BR');
+  el('r_z_mortes').textContent=rMortes.toLocaleString('pt-BR')+' cab';
+  el('r_z_saida_cab').textContent=Math.round(rCabsSaida).toLocaleString('pt-BR')+' cab';
+
+  el('r_e_receita').textContent=money(rReceita);
+  el('r_e_entrada').textContent=money(bCustoTotal);
+  el('r_e_op').textContent=money(rCustoOp);
+  el('r_e_juros').textContent=money(rJuros);
+  el('r_e_mort').textContent=money(rMortValor);
+  var rLucroEl=el('r_e_lucro');rLucroEl.textContent=moneyS(rLucro);rLucroEl.className='kpi-v xl '+(rLucro>=0?'green':'red');
+  el('r_e_margem').textContent=pct(rMargem);
+  el('r_e_roe').textContent=pct(rRoe);
+  el('r_e_roe_aa').textContent=pct(rRoeAa)+' a.a.';
+  el('r_e_custo_total').textContent=money(rCustoTotalCab);
+
+  // Impacto GMD recria
+  var impH='';
+  [10,20,30,50].forEach(function(g){
+    var delta=(g/1000)*rDias*rPrecoVenda;
+    impH+='<div class="cost-row"><span class="cost-label">+'+g+'g/dia no GMD ('+rDias+'d)</span><span class="cost-val green">+'+money(delta)+'</span></div>';
+  });
+  set('r_impacto',impH);
+
+  // ── CONFINAMENTO ──
+  var cPesoIni=v('c_peso_ini');
+  var cGmd=v('c_gmd');
+  var cDias=v('c_dias');
+  var cRendIni=v('c_rend_ini')/100;
+  var cRendFim=v('c_rend_fim')/100;
+  var cConsMs=v('c_cons_ms');
+  var cCustoMs=v('c_custo_ms');
+  var cCustoManejo=v('c_custo_manejo');
+  var cPrecoGordo=v('c_preco_gordo');
+  var cDiasFrig=v('c_dias_frig');
+
+  var cPesoFim=cPesoIni+cGmd*cDias;
+  var cCarcaca=cPesoFim*cRendFim;
+  var cGanhoCarc=cCarcaca-(cPesoIni*cRendIni);
+  var cGanhoCarcDia=cDias>0?cGanhoCarc/cDias:0;
+  var cMsTotal=cConsMs*cDias;
+  var cEfic=cGanhoCarc>0?cMsTotal/cGanhoCarc:0;
+  var cConv=(cPesoFim-cPesoIni)>0?cMsTotal/(cPesoFim-cPesoIni):0;
+  var cMeses=cDias/30.5;
+
+  // Custo de entrada confinamento = preço de saída da recria
+  var cCustoEntrada=rPesoSaida*rPrecoVenda; // se próprio
+  var cCustoNutri=cConsMs*cCustoMs*cDias;
+  var cCustoOp=cCustoManejo*cDias;
+  var cJuros=cCustoEntrada*jurosAA*((cDias+cDiasFrig)/365);
+  var cMortValor=cCustoEntrada*mortConf;
+  var cReceita=cCarcaca*cPrecoGordo;
+  var cCustoTotalCab=cCustoEntrada+cCustoNutri+cCustoOp+cJuros+cMortValor;
+  var cLucro=cReceita-cCustoTotalCab;
+  var cMargem=cReceita>0?(cLucro/cReceita)*100:0;
+  var cRetorno=cCustoTotalCab>0?(cLucro/cCustoTotalCab)*100:0;
+  var cCustoDia=(cCustoNutri+cCustoOp)/cDias;
+  var cCustoCarc=cGanhoCarc>0?(cCustoNutri+cCustoOp)/cGanhoCarc:0;
+  var cMortEst=Math.round(escalaC*mortConf);
+  var safeCarcaca=cCarcaca>0?cCarcaca:1; // proteção divisão por zero nos break-evens
+
+  el('c_z_entrada').textContent=kg(cPesoIni);
+  el('c_z_saida').textContent=kg(cPesoFim);
+  el('c_z_carcaca').textContent=kg(cCarcaca);
+  el('c_z_ganho_carc').textContent=(cGanhoCarcDia*1000).toFixed(1)+'g/dia';
+  el('c_z_ms_total').textContent=kg(cMsTotal);
+  el('c_z_efic').textContent=cEfic.toFixed(2)+' kgMS/kg carc';
+  el('c_z_conv').textContent=cConv.toFixed(2)+' kgMS/kgGPV';
+  el('c_z_mort').textContent=cMortEst.toLocaleString('pt-BR')+' cab ('+pct(mortConf*100,1)+')';
+
+  el('c_e_receita').textContent=money(cReceita);
+  el('c_e_entrada').textContent=money(cCustoEntrada);
+  el('c_e_nutri').textContent=money(cCustoNutri);
+  el('c_e_op').textContent=money(cCustoOp);
+  el('c_e_juros').textContent=money(cJuros);
+  el('c_e_mort').textContent=money(cMortValor);
+  var cLucroEl=el('c_e_lucro');cLucroEl.textContent=moneyS(cLucro);cLucroEl.className='kpi-v xl '+(cLucro>=0?'green':'red');
+  el('c_e_margem').textContent=pct(cMargem);
+  el('c_e_retorno').textContent=pct(cRetorno);
+  el('c_e_custo_dia').textContent='$'+cCustoDia.toFixed(2)+'/cab/dia';
+  el('c_e_custo_carc').textContent='$'+cCustoCarc.toFixed(2)+'/kg';
+
+  // ── DECISÃO 1 ──
+  // Break-even: a que preço do gordo confinar = vender magro agora?
+  // rLucro = lucro vendendo magro
+  // cLucro(be) = rLucro → be = (rLucro + cCustoTotalCab) / cCarcaca
+  var d1Be=(rLucro+cCustoTotalCab)/safeCarcaca;
+  var d1Diff=cLucro-rLucro;
+  el('d1_be_preco').textContent='$'+d1Be.toFixed(2);
+  var d1LucroMEl=el('d1_lucro_magro');d1LucroMEl.textContent=moneyS(rLucro);d1LucroMEl.className='cost-val '+(rLucro>=0?'green':'red');
+  var d1LucroCEl=el('d1_lucro_conf');d1LucroCEl.textContent=moneyS(cLucro);d1LucroCEl.className='cost-val '+(cLucro>=0?'green':'red');
+  var d1DiffEl=el('d1_diff');d1DiffEl.textContent=moneyS(d1Diff);d1DiffEl.className='cost-val '+(d1Diff>=0?'green':'red');
+  var d1RecEl=el('d1_rec');
+  var confinarMelhor=cLucro>rLucro;
+  d1RecEl.textContent=confinarMelhor?'✅ CONFINAR É MAIS RENTÁVEL':'✅ VENDER MAGRO É MAIS RENTÁVEL';
+  d1RecEl.className='kpi-v lg '+(confinarMelhor?'green':'gold');
+
+  // Zona visual D1
+  var beMin1=d1Be*0.7,beMax1=d1Be*1.4;
+  var bePct1=Math.min(Math.max((d1Be-beMin1)/(beMax1-beMin1)*100,5),88);
+  var vPct1=Math.min(Math.max((cPrecoGordo-beMin1)/(beMax1-beMin1)*100,5),93);
+  set('d1_zona','<div class="zona"><div style="position:absolute;left:0;top:0;height:100%;width:'+bePct1+'%;background:linear-gradient(90deg,#001a0d,#0d3a20);display:flex;align-items:center;padding-left:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#4caf88">← Vender magro</span></div><div style="position:absolute;right:0;top:0;height:100%;width:'+(100-bePct1)+'%;background:linear-gradient(90deg,#1a1400,#3a2800);display:flex;align-items:center;justify-content:flex-end;padding-right:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#c8a84b">Confinar →</span></div><div style="position:absolute;top:0;left:'+bePct1+'%;width:2px;height:100%;background:#fff;opacity:.4"></div><div style="position:absolute;top:6px;left:'+vPct1+'%;transform:translateX(-50%)"><div style="background:#fff;color:#000;font-size:9px;font-family:monospace;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">▼ $'+cPrecoGordo.toFixed(2)+'</div></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#3a5a3a;font-family:monospace;margin-top:3px"><span>$'+beMin1.toFixed(2)+'</span><span>BE: $'+d1Be.toFixed(2)+'</span><span>$'+beMax1.toFixed(2)+'</span></div>');
+
+  // Sensibilidade D1
+  var sensH1='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;margin-bottom:6px;color:#3a6a3a;font-family:monospace;text-transform:uppercase;padding:0 4px"><span>Preço gordo</span><span style="text-align:right">Lucro confinar</span><span style="text-align:right">Lucro magro</span><span style="text-align:right">Melhor</span></div>';
+  [-20,-10,0,10,20,30].forEach(function(pct_){
+    var pg=cPrecoGordo*(1+pct_/100);
+    var rec_=cCarcaca*pg;
+    var luc_=rec_-cCustoTotalCab;
+    var melhor=luc_>rLucro?'Confinar':'Vender';
+    var isBase=pct_===0;
+    sensH1+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;padding:7px 4px;border-radius:6px;margin-bottom:3px;background:'+(isBase?'#0d2a0d':'transparent')+'"><span style="font-family:monospace;color:#7bc67e">$'+pg.toFixed(2)+' ('+( pct_>0?'+':'')+pct_+'%)</span><span style="text-align:right;font-family:monospace;color:'+(luc_>=0?'#7bc67e':'#e07070')+'">'+moneyS(luc_)+'</span><span style="text-align:right;font-family:monospace;color:'+(rLucro>=0?'#7bc67e':'#e07070')+'">'+moneyS(rLucro)+'</span><span style="text-align:right;font-family:monospace;color:'+(melhor==='Confinar'?'#c8a84b':'#7bc67e')+'">'+melhor+'</span></div>';
+  });
+  set('d1_sens',sensH1);
+
+  var fatH='';
+  var fatores=[
+    {cond:cGmd>1.3,ok:'GMD alto ('+cGmd+' kg/dia) → boa conversão alimentar',no:'GMD baixo — monitorar conversão'},
+    {cond:cPrecoGordo>d1Be,ok:'Preço gordo ($'+cPrecoGordo.toFixed(2)+') acima do BE ($'+d1Be.toFixed(2)+')',no:'Preço gordo abaixo do break-even — B pode ser melhor'},
+    {cond:jurosAA<0.10,ok:'Custo financeiro baixo ('+pct(jurosAA*100)+'a.a.)',no:'Custo financeiro elevado — peso nos juros'},
+    {cond:cRendFim>55,ok:'Rendimento de carcaça alto ('+v('c_rend_fim')+'%)',no:'Rendimento de carcaça abaixo da média'},
+  ];
+  fatores.forEach(function(f){
+    fatH+='<div class="cost-row"><span class="cost-label">'+(f.cond?'✅':'⚠️')+'</span><span style="font-size:11px;color:'+(f.cond?'#7bc67e':'#e07070')+'">'+(f.cond?f.ok:f.no)+'</span></div>';
+  });
+  set('d1_fatores',fatH);
+
+  // ── DECISÃO 2 ──
+  var d2RecServ=v('d2_rec_serv');
+  var d2CustoServ=v('d2_custo_serv');
+  var d2MargemServ=(d2RecServ-d2CustoServ)*cDias;
+  var d2CapitalMagro=rPesoSaida*rPrecoVenda;
+
+  // BE: carcaca*beGordo - cCustoTotalCab = d2MargemServ
+  var d2Be=(cCustoTotalCab+d2MargemServ)/safeCarcaca;
+  var d2ABetter=cPrecoGordo>d2Be;
+
+  el('d2_a_lucro').textContent=moneyS(cLucro);
+  el('d2_a_lucro').className='kpi-v xl '+(cLucro>=0?'green':'red');
+  el('d2_a_cap').textContent=money(cCustoTotalCab)+' imobilizado';
+  el('d2_a_tempo').textContent=(cDias+cDiasFrig)+' dias até receber';
+  el('d2_b_margem').textContent=moneyS(d2MargemServ);
+  el('d2_b_capital').textContent=money(d2CapitalMagro)+' em caixa imediato';
+  el('d2_be').textContent='$'+d2Be.toFixed(2);
+
+  var d2RecEl=el('d2_rec');
+  d2RecEl.textContent=d2ABetter?'🏆 A SUPERIOR — gordo acima do break-even':'🏆 B SUPERIOR — gordo abaixo do break-even';
+  d2RecEl.className='kpi-v lg '+(d2ABetter?'gold':'green');
+
+  var d2Card_a=el('d2_card_a');
+  var d2Card_b=el('d2_card_b');
+  if(d2Card_a)d2Card_a.style.borderColor=d2ABetter?'#5a8a10':'#1a3a1a';
+  if(d2Card_b)d2Card_b.style.borderColor=!d2ABetter?'#2a8a2a':'#1a3a1a';
+
+  // Zona visual D2
+  var beMin2=d2Be*0.7,beMax2=d2Be*1.4;
+  var bePct2=Math.min(Math.max((d2Be-beMin2)/(beMax2-beMin2)*100,5),88);
+  var vPct2=Math.min(Math.max((cPrecoGordo-beMin2)/(beMax2-beMin2)*100,5),93);
+  set('d2_zona','<div class="zona"><div style="position:absolute;left:0;top:0;height:100%;width:'+bePct2+'%;background:linear-gradient(90deg,#001a0d,#0d3a20);display:flex;align-items:center;padding-left:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#4caf88">← B melhor</span></div><div style="position:absolute;right:0;top:0;height:100%;width:'+(100-bePct2)+'%;background:linear-gradient(90deg,#1a1400,#3a2800);display:flex;align-items:center;justify-content:flex-end;padding-right:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#c8a84b">A melhor →</span></div><div style="position:absolute;top:0;left:'+bePct2+'%;width:2px;height:100%;background:#fff;opacity:.4"></div><div style="position:absolute;top:6px;left:'+vPct2+'%;transform:translateX(-50%)"><div style="background:#fff;color:#000;font-size:9px;font-family:monospace;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">▼ $'+cPrecoGordo.toFixed(2)+'</div></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#3a5a3a;font-family:monospace;margin-top:3px"><span>$'+beMin2.toFixed(2)+'</span><span>BE: $'+d2Be.toFixed(2)+'</span><span>$'+beMax2.toFixed(2)+'</span></div>');
+
+  var sensH2='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;margin-bottom:6px;color:#3a6a3a;font-family:monospace;text-transform:uppercase;padding:0 4px"><span>Preço gordo</span><span style="text-align:right">Estratégia A</span><span style="text-align:right">Estratégia B</span><span style="text-align:right">Melhor</span></div>';
+  [-20,-10,0,10,20,30].forEach(function(pct_){
+    var pg=cPrecoGordo*(1+pct_/100);
+    var lucA=cCarcaca*pg-cCustoTotalCab;
+    var isBase=pct_===0;
+    var melhor=lucA>d2MargemServ?'A':'B';
+    sensH2+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;padding:7px 4px;border-radius:6px;margin-bottom:3px;background:'+(isBase?'#0d2a0d':'transparent')+'"><span style="font-family:monospace;color:#7bc67e">$'+pg.toFixed(2)+' ('+(pct_>0?'+':'')+pct_+'%)</span><span style="text-align:right;font-family:monospace;color:'+(lucA>=0?'#7bc67e':'#e07070')+'">'+moneyS(lucA)+'</span><span style="text-align:right;font-family:monospace;color:#7bc67e">+'+money(d2MargemServ)+'</span><span style="text-align:right;font-family:monospace;color:'+(melhor==='A'?'#c8a84b':'#7bc67e')+'">'+melhor+'</span></div>';
+  });
+  set('d2_sens',sensH2);
+
+  // ── RESULTADO FINAL ──
+  var totalDias=rDias+cDias+cDiasFrig;
+  var totalMeses=totalDias/30.5;
+  var lucroTotal=rLucro+cLucro;
+  var capInicial=bCustoTotal;
+
+  // VPL com TRANSFERÊNCIA INTERNA: a venda do magro NÃO é caixa.
+  // Caixa real = -compra bezerro -custos recria -custos confinamento +venda gordo (descontados)
+  // Custos da recria distribuídos no meio do período; confinamento idem; venda no fim.
+  var anoBez=0;
+  var anoRecriaCusto=(rDias/2)/365;           // ponto médio da recria
+  var anoConfCusto=(rDias+cDias/2)/365;        // ponto médio do confinamento
+  var anoVenda=(rDias+cDias+cDiasFrig)/365;    // recebimento do gordo
+  var custoRecriaCaixa=rCustoOp+rJuros;        // operacional + financeiro (sem transferência)
+  var custoConfCaixa=cCustoNutri+cCustoOp+cJuros; // operacional confinamento (sem custo de entrada = transferência)
+  // VPL descontado pela TMA (retorno exigido), não pelos juros puros
+  var df=function(anos){return Math.pow(1+tma,anos);};
+  var vpl = -bCustoTotal/df(anoBez)
+            - custoRecriaCaixa/df(anoRecriaCusto)
+            - custoConfCaixa/df(anoConfCusto)
+            + cReceita/df(anoVenda);
+
+  // TIR real: resolve a taxa que zera o VPL dos fluxos acima (busca por bisseção)
+  function vplAt(taxa){
+    return -bCustoTotal
+           - custoRecriaCaixa/Math.pow(1+taxa,anoRecriaCusto)
+           - custoConfCaixa/Math.pow(1+taxa,anoConfCusto)
+           + cReceita/Math.pow(1+taxa,anoVenda);
+  }
+  var tir=0,tirOk=false;
+  if(lucroTotal>0){
+    var lo=-0.99,hi=10;
+    if(vplAt(lo)>0&&vplAt(hi)>0){tir=hi;tirOk=true;}
+    else if(vplAt(lo)<0&&vplAt(hi)<0){tir=lo;tirOk=false;}
+    else{
+      for(var i=0;i<60;i++){var mid=(lo+hi)/2;if(vplAt(mid)>0)lo=mid;else hi=mid;}
+      tir=(lo+hi)/2;tirOk=true;
+    }
+  }else{
+    // lucro negativo: TIR é negativa
+    tir=capInicial>0?Math.pow(1+lucroTotal/capInicial,365/totalDias)-1:-1;
+    tirOk=false;
+  }
+
+  var roe=capInicial>0?(lucroTotal/capInicial)*100:0;
+
+  // ── TMA × JUROS × TIR ──
+  el('g_juros_disp').textContent=pct(jurosAA*100,1);
+  var gTmaDisp=el('g_tma_disp');if(gTmaDisp)gTmaDisp.textContent=pct(tma*100,1);
+  var gP2=el('g_payback2');if(gP2)gP2.textContent=totalDias+'d';
+  var gTirVsTma=el('g_tir_vs_tma');
+  if(tirOk){
+    var spread=(tir-tma)*100;
+    gTirVsTma.textContent=(spread>=0?'+':'')+spread.toFixed(1)+' p.p.';
+    gTirVsTma.className='kpi-v lg '+(tir>=tma?'green':'red');
+  }else{
+    gTirVsTma.textContent='N/A';
+    gTirVsTma.className='kpi-v lg red';
+  }
+
+  // Resumo global
+  el('g_res_entrada').textContent=money(bCustoTotal);
+  var rResEl=el('g_res_recria');rResEl.textContent=moneyS(rLucro);rResEl.className='kpi-v '+(rLucro>=0?'green':'red');
+  var cResEl=el('g_res_conf');cResEl.textContent=moneyS(cLucro);cResEl.className='kpi-v '+(cLucro>=0?'green':'red');
+  var tResEl=el('g_res_total');tResEl.textContent=moneyS(lucroTotal);tResEl.className='kpi-v xl '+(lucroTotal>=0?'green':'red');
+  var gRoeEl=el('g_roe');gRoeEl.textContent=pct(roe);gRoeEl.className='kpi-v lg '+(roe>=0?'green':'red');
+  var gTirEl=el('g_tir');gTirEl.textContent=tirOk?pct(tir*100):'N/A';gTirEl.className='kpi-v lg '+(tirOk&&tir>=tma?'green':'red');
+  var gVplEl=el('g_vpl');gVplEl.textContent=moneyK(vpl);gVplEl.className='kpi-v lg '+(vpl>=0?'green':'red');
+  el('g_payback').textContent=totalMeses.toFixed(1)+'m';
+  el('g_tot_recria').textContent=moneyK(rLucro*escalaR*(1-mortRecria));
+  el('g_tot_conf').textContent=moneyK(cLucro*escalaC*(1-mortConf));
+  el('g_cap_imob').textContent=moneyK(bCustoTotal*escalaR);
+  el('g_duracao').textContent=totalDias+'d / '+totalMeses.toFixed(1)+'m';
+
+  // Banner resultado final
+  var banClass=lucroTotal>=0?'ok':'bad';
+  var banH='<div class="banner '+banClass+'">';
+  [{l:'Entrada bezerro',v:money(bCustoTotal),c:'red'},{l:'Lucro recria/cab',v:moneyS(rLucro),c:rLucro>=0?'green':'red'},{l:'Lucro confinamento/cab',v:moneyS(cLucro),c:cLucro>=0?'green':'red'},{l:'LUCRO TOTAL/CAB',v:moneyS(lucroTotal),c:lucroTotal>=0?'green':'red',big:true}].forEach(function(item){
+    banH+='<div class="banner-item"><div class="bl">'+item.l+'</div><div class="bv" style="font-size:'+(item.big?'28px':'18px')+';color:'+(item.c==='green'?'#7bc67e':item.c==='red'?'#e07070':'#c8a84b')+'">'+item.v+'</div></div>';
+  });
+  banH+='</div>';
+  set('res_banner',banH);
+
+  // Indicadores finais
+  var resVplEl=el('res_vpl');resVplEl.textContent=moneyK(vpl);resVplEl.className='kpi-v lg '+(vpl>=0?'green':'red');
+  var resTirEl=el('res_tir');resTirEl.textContent=tirOk?pct(tir*100):'N/A';resTirEl.className='kpi-v lg '+(tirOk&&tir>=tma?'gold':'red');
+  var resTmaEl=el('res_tma');if(resTmaEl){resTmaEl.textContent=pct(tma*100,1);resTmaEl.className='kpi-v lg gold';}
+  el('res_payback').textContent=totalMeses.toFixed(1)+' meses';
+
+  // Veredito do projeto: TIR ≥ TMA e VPL ≥ 0
+  var veredEl=el('res_veredito');
+  if(veredEl){
+    if(tirOk&&tir>=tma&&vpl>=0){
+      veredEl.textContent='✅ PROJETO ATRATIVO — TIR ('+pct(tir*100,1)+') supera a TMA ('+pct(tma*100,1)+') e VPL positivo';
+      veredEl.className='kpi-v lg green';
+    }else if(tirOk&&tir>=jurosAA&&tir<tma){
+      veredEl.textContent='⚠️ ABAIXO DO EXIGIDO — TIR ('+pct(tir*100,1)+') cobre o custo do capital ('+pct(jurosAA*100,1)+') mas não atinge a TMA ('+pct(tma*100,1)+')';
+      veredEl.className='kpi-v lg gold';
+    }else{
+      veredEl.textContent='❌ PROJETO NÃO ATRATIVO — retorno abaixo do custo de capital ('+pct(jurosAA*100,1)+')';
+      veredEl.className='kpi-v lg red';
+    }
+  }
+
+  // Fluxo de caixa REAL (transferência interna não aparece como venda/compra)
+  var maxFluxo=Math.max(bCustoTotal,custoRecriaCaixa,custoConfCaixa,cReceita,1);
+  var fluxos=[
+    {l:'M0 — Compra bezerro',v:-bCustoTotal,tipo:'saida'},
+    {l:'M1~'+Math.round(rMeses)+' — Custos recria',v:-custoRecriaCaixa,tipo:'saida'},
+    {l:'M'+Math.round(rMeses)+' — Transferência interna',v:0,tipo:'neutro'},
+    {l:'M'+Math.round(rMeses)+'~'+Math.round(rMeses+cMeses)+' — Custos conf.',v:-custoConfCaixa,tipo:'saida'},
+    {l:'M'+Math.round(rMeses+cMeses)+' — Venda gordo',v:cReceita,tipo:'entrada'},
+  ];
+  var fluxoH='';
+  fluxos.forEach(function(f){
+    if(f.tipo==='neutro'){
+      fluxoH+='<div class="fluxo-row"><span class="fluxo-label">'+f.l+'</span><div class="fluxo-bar-wrap"><div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#3a6a3a;font-family:monospace">magro → confinamento (sem caixa)</div></div><span class="fluxo-val muted">$0,00</span></div>';
+      return;
+    }
+    var pct_=Math.min(Math.abs(f.v)/maxFluxo*100,100);
+    var col=f.tipo==='entrada'?'linear-gradient(90deg,#1a5a2a,#7bc67e)':'linear-gradient(90deg,#5a1a1a,#e07070)';
+    var textCol=f.tipo==='entrada'?'#000':'#fff';
+    fluxoH+='<div class="fluxo-row"><span class="fluxo-label">'+f.l+'</span><div class="fluxo-bar-wrap"><div class="fluxo-bar" style="width:'+pct_+'%;background:'+col+';color:'+textCol+'">'+moneyS(f.v)+'</div></div><span class="fluxo-val" style="color:'+(f.v>=0?'#7bc67e':'#e07070')+'">'+moneyS(f.v)+'</span></div>';
+  });
+  // Saldo líquido de caixa
+  var saldoCaixa=-bCustoTotal-custoRecriaCaixa-custoConfCaixa+cReceita;
+  fluxoH+='<div class="hr"></div><div class="fluxo-row"><span class="fluxo-label" style="color:#c8e6c8;font-weight:700">SALDO LÍQUIDO</span><div class="fluxo-bar-wrap" style="background:transparent"></div><span class="fluxo-val" style="color:'+(saldoCaixa>=0?'#7bc67e':'#e07070')+';font-size:13px">'+moneyS(saldoCaixa)+'</span></div>';
+  set('res_fluxo',fluxoH);
+
+  // Escala — recria usa cabeças que SOBREVIVEM até a venda (mortalidade reduz cabeças)
+  var escalaRsobrev=escalaR*(1-mortRecria);
+  el('res_r_cabs').textContent=escalaR.toLocaleString('pt-BR')+' → '+Math.round(escalaRsobrev).toLocaleString('pt-BR')+' cab';
+  var rrTotEl=el('res_r_total');rrTotEl.textContent=moneyK(rLucro*escalaRsobrev);rrTotEl.className='kpi-v lg '+(rLucro>=0?'gold':'red');
+  el('res_r_cap').textContent=moneyK(bCustoTotal*escalaR);
+  var escalaCsobrev=escalaC*(1-mortConf);
+  el('res_c_cabs').textContent=escalaC.toLocaleString('pt-BR')+' → '+Math.round(escalaCsobrev).toLocaleString('pt-BR')+' cab';
+  var rcTotEl=el('res_c_total');rcTotEl.textContent=moneyK(cLucro*escalaCsobrev);rcTotEl.className='kpi-v lg '+(cLucro>=0?'gold':'red');
+  el('res_c_cap').textContent=moneyK(cCustoEntrada*escalaC);
+
+  // Sensibilidade final
+  var varsens=[
+    {label:'Preço venda magro',base:rPrecoVenda,fn:function(x){var r2=rPesoSaida*x-bCustoTotal-rCustoOp-rJuros-rMortValor;return r2+cLucro;}},
+    {label:'GMD recria (g/dia)',base:rGmd*1000,fn:function(x){var pf2=bPeso+(x/1000)*rDias;var r2=pf2*rPrecoVenda-bCustoTotal-rCustoOp-rJuros-rMortValor;return r2+cLucro;}},
+    {label:'Preço bezerro (₲/kg)',base:bPrecoPyg,fn:function(x){var bc2=bPeso*(x/cambio)+bFrete+bComissao+bVet;var r2=rReceita-bc2-rCustoOp-bc2*jurosAA*(rDias/365)-bc2*mortRecria;return r2+cLucro;}},
+    {label:'Preço gordo (US$/kg carc)',base:cPrecoGordo,fn:function(x){var cR2=cCarcaca*x;return rLucro+(cR2-cCustoTotalCab);}},
+    {label:'GMD confinamento (g/dia)',base:cGmd*1000,fn:function(x){var pf2=cPesoIni+(x/1000)*cDias;var cc2=pf2*cRendFim;var cR2=cc2*cPrecoGordo;return rLucro+(cR2-cCustoTotalCab);}},
+  ];
+  var sensH='';
+  varsens.forEach(function(sv){
+    var baseLucro=sv.fn(sv.base);
+    var pessLucro=sv.fn(sv.base*0.88);
+    var otimLucro=sv.fn(sv.base*1.12);
+    var maxDelta=Math.max(Math.abs(pessLucro-baseLucro),Math.abs(otimLucro-baseLucro),1);
+    sensH+='<div class="sens-row" style="background:#071007;margin-bottom:6px"><span class="sens-label" style="min-width:200px">'+sv.label+'</span><div class="sens-vals"><span class="sens-val" style="color:#e07070">'+moneyS(pessLucro)+'</span><span class="sens-val" style="color:#c8a84b">'+moneyS(baseLucro)+'</span><span class="sens-val" style="color:#7bc67e">'+moneyS(otimLucro)+'</span></div></div>';
+  });
+  set('res_sens',sensH);
+
+  // Riscos
+  var riscosH='';
+  var riscos=[
+    {nivel:'ALTO',cor:'#e07070',titulo:'Queda no preço do magro',desc:'Variável mais sensível. Queda de 12% no preço do magro impacta diretamente a receita da recria e o custo de entrada do confinamento.'},
+    {nivel:'ALTO',cor:'#e07070',titulo:'GMD abaixo do projetado',desc:'GMD de recria abaixo de '+rGmd.toFixed(3)+'kg/dia reduz o peso de saída e compromete a rentabilidade do ciclo inteiro.'},
+    {nivel:'MÉDIO',cor:'#c8a84b',titulo:'Alta no preço do bezerro',desc:'Ágio atual de '+pct(Math.abs(bAgio))+'. Alta de 10% no bezerro impacta diretamente o capital imobilizado e os juros.'},
+    {nivel:'MÉDIO',cor:'#c8a84b',titulo:'Preço gordo abaixo do break-even',desc:'Break-even para confinar: $'+d1Be.toFixed(2)+'/kg PV. Preço atual: $'+cPrecoGordo.toFixed(2)+'/kg carc.'},
+    {nivel:'BAIXO',cor:'#7bc67e',titulo:'Mortalidade acima do previsto',desc:'Mortalidade projetada: '+pct(mortRecria*100,1)+' recria / '+pct(mortConf*100,1)+' confinamento. Monitorar sanidade e manejo.'},
+  ];
+  riscos.forEach(function(r){
+    riscosH+='<div class="cost-row"><span style="font-size:10px;font-weight:700;color:'+r.cor+';min-width:55px;font-family:monospace">'+r.nivel+'</span><div><div style="font-size:12px;font-weight:700;color:#c8e6c8;margin-bottom:2px">'+r.titulo+'</div><div style="font-size:11px;color:#3a6a3a">'+r.desc+'</div></div></div>';
+  });
+  set('res_riscos',riscosH);
+}
+
+// Init
+syncMS();
+calc();
+</script>
+</body>
+</html>+msCalc.toFixed(3)+'/kg MS';
+    var msEl=el('c_custo_ms');if(msEl)msEl.value=msCalc.toFixed(3);
+  }
+  calc();
+}
+function adjMS(id,step){adj(id,step);syncMS();}
+
+function nav(page){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  var pg=el('page-'+page);if(pg)pg.classList.add('active');
+  var btn=document.querySelector('[onclick="nav(\''+page+'\')"]');if(btn)btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// CÁLCULO PRINCIPAL
+// ════════════════════════════════════════════════
+function calc(){
+  var cambio=v('g_cambio')||1;
+  var jurosAA=v('g_juros')/100;
+  var mortRecria=v('g_mort_recria')/100;
+  var mortConf=v('g_mort_conf')/100;
+  var escalaR=v('g_escala_r');
+  var escalaC=v('g_escala_c');
+
+  // ── BEZERRO ──
+  var bPeso=v('b_peso');
+  var bPrecoPyg=v('b_preco_pyg');
+  var bFrete=v('b_frete');
+  var bComissao=v('b_comissao');
+  var bVet=v('b_vet');
+  var bPrecoUsd=bPrecoPyg/cambio;
+  var bCustoAnimal=bPeso*bPrecoUsd;
+  var bCustoTotal=bCustoAnimal+bFrete+bComissao+bVet;
+  var rPrecoVenda=v('r_preco_venda');
+  var bAgio=rPrecoVenda>0?((bPrecoUsd-rPrecoVenda)/rPrecoVenda)*100:0;
+
+  el('b_preco_usd').textContent='$'+bPrecoUsd.toFixed(2)+'/kg PV';
+  el('b_custo_animal').textContent=money(bCustoAnimal);
+  el('b_out_frete').textContent=money(bFrete);
+  el('b_out_comissao').textContent=money(bComissao);
+  el('b_out_vet').textContent=money(bVet);
+  el('b_custo_total').textContent=money(bCustoTotal);
+  var agioEl=el('b_agio');
+  agioEl.textContent=(bAgio>0?'+':'')+pct(bAgio)+' '+(bAgio>0?'⚠️ comprou acima':'✅ comprou abaixo');
+  agioEl.className='kpi-v lg '+(bAgio>0?'gold':'green');
+  el('b_custo_kg').textContent='$'+( bCustoTotal/bPeso).toFixed(2)+'/kg entrada';
+
+  // ── RECRIA ──
+  var rGmd=v('r_gmd');
+  var rDias=v('r_dias');
+  var rCustoMes=v('r_custo_total');
+  var rMeses=rDias/30.5;
+  var rPesoSaida=bPeso+rGmd*rDias;
+  var rGpv=rPesoSaida-bPeso;
+  var rCabsEntrada=v('r_area')*v('r_lotacao');
+  var rMortes=Math.round(rCabsEntrada*mortRecria);
+  var rCabsSaida=rCabsEntrada-rMortes;
+
+  // Arrendamento indexado
+  var arrModo=el('r_arr_modo')?.value||'fixo';
+  var arrKgField=el('r_arr_kg_field');
+  if(arrKgField)arrKgField.style.display=arrModo==='kg_carne'?'':'none';
+  var arrCustoMes=rCustoMes;
+  if(arrModo==='kg_carne'){
+    var arrKg=v('r_arr_kg');
+    var arrUsdHaAno=arrKg*rPrecoVenda;
+    var arrUsdHaMes=arrUsdHaAno/12;
+    var arrUsdCabMes=rCabsEntrada>0?(arrUsdHaMes*v('r_area'))/rCabsEntrada:0;
+    // Substitui componente de arrendamento no total
+    arrCustoMes=rCustoMes-v('r_d_arr')+arrUsdCabMes;
+  }
+
+  var rCustoOp=arrCustoMes*rMeses;
+  var rJuros=bCustoTotal*jurosAA*(rDias/365);
+  var rMortValor=bCustoTotal*mortRecria;
+  var rReceita=rPesoSaida*rPrecoVenda;
+  var rCustoTotalCab=bCustoTotal+rCustoOp+rJuros+rMortValor;
+  var rLucro=rReceita-rCustoTotalCab;
+  var rMargem=rReceita>0?(rLucro/rReceita)*100:0;
+  var rRoe=bCustoTotal>0?(rLucro/bCustoTotal)*100:0;
+  var rRoeAa=rRoe/(rDias/365);
+
+  el('r_z_entrada').textContent=kg(bPeso);
+  var rSaidaEl=el('r_z_saida');rSaidaEl.textContent=kg(rPesoSaida);rSaidaEl.className='kpi-v green';
+  el('r_z_gpv').textContent=kg(rGpv);
+  el('r_z_gmd').textContent=rGmd.toFixed(3)+' kg/dia';
+  el('r_z_periodo').textContent=rDias+'d / '+rMeses.toFixed(1)+'m';
+  el('r_z_cabs').textContent=Math.round(rCabsEntrada).toLocaleString('pt-BR');
+  el('r_z_mortes').textContent=rMortes.toLocaleString('pt-BR')+' cab';
+  el('r_z_saida_cab').textContent=Math.round(rCabsSaida).toLocaleString('pt-BR')+' cab';
+
+  el('r_e_receita').textContent=money(rReceita);
+  el('r_e_entrada').textContent=money(bCustoTotal);
+  el('r_e_op').textContent=money(rCustoOp);
+  el('r_e_juros').textContent=money(rJuros);
+  el('r_e_mort').textContent=money(rMortValor);
+  var rLucroEl=el('r_e_lucro');rLucroEl.textContent=moneyS(rLucro);rLucroEl.className='kpi-v xl '+(rLucro>=0?'green':'red');
+  el('r_e_margem').textContent=pct(rMargem);
+  el('r_e_roe').textContent=pct(rRoe);
+  el('r_e_roe_aa').textContent=pct(rRoeAa)+' a.a.';
+  el('r_e_custo_total').textContent=money(rCustoTotalCab);
+
+  // Impacto GMD recria
+  var impH='';
+  [10,20,30,50].forEach(function(g){
+    var delta=(g/1000)*rDias*rPrecoVenda;
+    impH+='<div class="cost-row"><span class="cost-label">+'+g+'g/dia no GMD ('+rDias+'d)</span><span class="cost-val green">+'+money(delta)+'</span></div>';
+  });
+  set('r_impacto',impH);
+
+  // ── CONFINAMENTO ──
+  var cPesoIni=v('c_peso_ini');
+  var cGmd=v('c_gmd');
+  var cDias=v('c_dias');
+  var cRendIni=v('c_rend_ini')/100;
+  var cRendFim=v('c_rend_fim')/100;
+  var cConsMs=v('c_cons_ms');
+  var cCustoMs=v('c_custo_ms');
+  var cCustoManejo=v('c_custo_manejo');
+  var cPrecoGordo=v('c_preco_gordo');
+  var cDiasFrig=v('c_dias_frig');
+
+  var cPesoFim=cPesoIni+cGmd*cDias;
+  var cCarcaca=cPesoFim*cRendFim;
+  var cGanhoCarc=cCarcaca-(cPesoIni*cRendIni);
+  var cGanhoCarcDia=cDias>0?cGanhoCarc/cDias:0;
+  var cMsTotal=cConsMs*cDias;
+  var cEfic=cGanhoCarc>0?cMsTotal/cGanhoCarc:0;
+  var cConv=(cPesoFim-cPesoIni)>0?cMsTotal/(cPesoFim-cPesoIni):0;
+  var cMeses=cDias/30.5;
+
+  // Custo de entrada confinamento = preço de saída da recria
+  var cCustoEntrada=rPesoSaida*rPrecoVenda; // se próprio
+  var cCustoNutri=cConsMs*cCustoMs*cDias;
+  var cCustoOp=cCustoManejo*cDias;
+  var cJuros=cCustoEntrada*jurosAA*((cDias+cDiasFrig)/365);
+  var cMortValor=cCustoEntrada*mortConf;
+  var cReceita=cCarcaca*cPrecoGordo;
+  var cCustoTotalCab=cCustoEntrada+cCustoNutri+cCustoOp+cJuros+cMortValor;
+  var cLucro=cReceita-cCustoTotalCab;
+  var cMargem=cReceita>0?(cLucro/cReceita)*100:0;
+  var cRetorno=cCustoTotalCab>0?(cLucro/cCustoTotalCab)*100:0;
+  var cCustoDia=(cCustoNutri+cCustoOp)/cDias;
+  var cCustoCarc=cGanhoCarc>0?(cCustoNutri+cCustoOp)/cGanhoCarc:0;
+  var cMortEst=Math.round(escalaC*mortConf);
+
+  el('c_z_entrada').textContent=kg(cPesoIni);
+  el('c_z_saida').textContent=kg(cPesoFim);
+  el('c_z_carcaca').textContent=kg(cCarcaca);
+  el('c_z_ganho_carc').textContent=(cGanhoCarcDia*1000).toFixed(1)+'g/dia';
+  el('c_z_ms_total').textContent=kg(cMsTotal);
+  el('c_z_efic').textContent=cEfic.toFixed(2)+' kgMS/kg carc';
+  el('c_z_conv').textContent=cConv.toFixed(2)+' kgMS/kgGPV';
+  el('c_z_mort').textContent=cMortEst.toLocaleString('pt-BR')+' cab ('+pct(mortConf*100,1)+')';
+
+  el('c_e_receita').textContent=money(cReceita);
+  el('c_e_entrada').textContent=money(cCustoEntrada);
+  el('c_e_nutri').textContent=money(cCustoNutri);
+  el('c_e_op').textContent=money(cCustoOp);
+  el('c_e_juros').textContent=money(cJuros);
+  el('c_e_mort').textContent=money(cMortValor);
+  var cLucroEl=el('c_e_lucro');cLucroEl.textContent=moneyS(cLucro);cLucroEl.className='kpi-v xl '+(cLucro>=0?'green':'red');
+  el('c_e_margem').textContent=pct(cMargem);
+  el('c_e_retorno').textContent=pct(cRetorno);
+  el('c_e_custo_dia').textContent='$'+cCustoDia.toFixed(2)+'/cab/dia';
+  el('c_e_custo_carc').textContent='$'+cCustoCarc.toFixed(2)+'/kg';
+
+  // ── DECISÃO 1 ──
+  // Break-even: a que preço do gordo confinar = vender magro agora?
+  // rLucro = lucro vendendo magro
+  // cLucro(be) = rLucro → be = (rLucro + cCustoTotalCab) / cCarcaca
+  var d1Be=(rLucro+cCustoTotalCab)/cCarcaca;
+  var d1Diff=cLucro-rLucro;
+  el('d1_be_preco').textContent='$'+d1Be.toFixed(2);
+  var d1LucroMEl=el('d1_lucro_magro');d1LucroMEl.textContent=moneyS(rLucro);d1LucroMEl.className='cost-val '+(rLucro>=0?'green':'red');
+  var d1LucroCEl=el('d1_lucro_conf');d1LucroCEl.textContent=moneyS(cLucro);d1LucroCEl.className='cost-val '+(cLucro>=0?'green':'red');
+  var d1DiffEl=el('d1_diff');d1DiffEl.textContent=moneyS(d1Diff);d1DiffEl.className='cost-val '+(d1Diff>=0?'green':'red');
+  var d1RecEl=el('d1_rec');
+  var confinarMelhor=cLucro>rLucro;
+  d1RecEl.textContent=confinarMelhor?'✅ CONFINAR É MAIS RENTÁVEL':'✅ VENDER MAGRO É MAIS RENTÁVEL';
+  d1RecEl.className='kpi-v lg '+(confinarMelhor?'green':'gold');
+
+  // Zona visual D1
+  var beMin1=d1Be*0.7,beMax1=d1Be*1.4;
+  var bePct1=Math.min(Math.max((d1Be-beMin1)/(beMax1-beMin1)*100,5),88);
+  var vPct1=Math.min(Math.max((cPrecoGordo-beMin1)/(beMax1-beMin1)*100,5),93);
+  set('d1_zona','<div class="zona"><div style="position:absolute;left:0;top:0;height:100%;width:'+bePct1+'%;background:linear-gradient(90deg,#001a0d,#0d3a20);display:flex;align-items:center;padding-left:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#4caf88">← Vender magro</span></div><div style="position:absolute;right:0;top:0;height:100%;width:'+(100-bePct1)+'%;background:linear-gradient(90deg,#1a1400,#3a2800);display:flex;align-items:center;justify-content:flex-end;padding-right:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#c8a84b">Confinar →</span></div><div style="position:absolute;top:0;left:'+bePct1+'%;width:2px;height:100%;background:#fff;opacity:.4"></div><div style="position:absolute;top:6px;left:'+vPct1+'%;transform:translateX(-50%)"><div style="background:#fff;color:#000;font-size:9px;font-family:monospace;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">▼ $'+cPrecoGordo.toFixed(2)+'</div></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#3a5a3a;font-family:monospace;margin-top:3px"><span>$'+beMin1.toFixed(2)+'</span><span>BE: $'+d1Be.toFixed(2)+'</span><span>$'+beMax1.toFixed(2)+'</span></div>');
+
+  // Sensibilidade D1
+  var sensH1='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;margin-bottom:6px;color:#3a6a3a;font-family:monospace;text-transform:uppercase;padding:0 4px"><span>Preço gordo</span><span style="text-align:right">Lucro confinar</span><span style="text-align:right">Lucro magro</span><span style="text-align:right">Melhor</span></div>';
+  [-20,-10,0,10,20,30].forEach(function(pct_){
+    var pg=cPrecoGordo*(1+pct_/100);
+    var rec_=cCarcaca*pg;
+    var luc_=rec_-cCustoTotalCab;
+    var melhor=luc_>rLucro?'Confinar':'Vender';
+    var isBase=pct_===0;
+    sensH1+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;padding:7px 4px;border-radius:6px;margin-bottom:3px;background:'+(isBase?'#0d2a0d':'transparent')+'"><span style="font-family:monospace;color:#7bc67e">$'+pg.toFixed(2)+' ('+( pct_>0?'+':'')+pct_+'%)</span><span style="text-align:right;font-family:monospace;color:'+(luc_>=0?'#7bc67e':'#e07070')+'">'+moneyS(luc_)+'</span><span style="text-align:right;font-family:monospace;color:'+(rLucro>=0?'#7bc67e':'#e07070')+'">'+moneyS(rLucro)+'</span><span style="text-align:right;font-family:monospace;color:'+(melhor==='Confinar'?'#c8a84b':'#7bc67e')+'">'+melhor+'</span></div>';
+  });
+  set('d1_sens',sensH1);
+
+  var fatH='';
+  var fatores=[
+    {cond:cGmd>1.3,ok:'GMD alto ('+cGmd+' kg/dia) → boa conversão alimentar',no:'GMD baixo — monitorar conversão'},
+    {cond:cPrecoGordo>d1Be,ok:'Preço gordo ($'+cPrecoGordo.toFixed(2)+') acima do BE ($'+d1Be.toFixed(2)+')',no:'Preço gordo abaixo do break-even — B pode ser melhor'},
+    {cond:jurosAA<0.10,ok:'Custo financeiro baixo ('+pct(jurosAA*100)+'a.a.)',no:'Custo financeiro elevado — peso nos juros'},
+    {cond:cRendFim>55,ok:'Rendimento de carcaça alto ('+v('c_rend_fim')+'%)',no:'Rendimento de carcaça abaixo da média'},
+  ];
+  fatores.forEach(function(f){
+    fatH+='<div class="cost-row"><span class="cost-label">'+(f.cond?'✅':'⚠️')+'</span><span style="font-size:11px;color:'+(f.cond?'#7bc67e':'#e07070')+'">'+(f.cond?f.ok:f.no)+'</span></div>';
+  });
+  set('d1_fatores',fatH);
+
+  // ── DECISÃO 2 ──
+  var d2RecServ=v('d2_rec_serv');
+  var d2CustoServ=v('d2_custo_serv');
+  var d2MargemServ=(d2RecServ-d2CustoServ)*cDias;
+  var d2CapitalMagro=rPesoSaida*rPrecoVenda;
+
+  // BE: carcaca*beGordo - cCustoTotalCab = d2MargemServ
+  var d2Be=(cCustoTotalCab+d2MargemServ)/cCarcaca;
+  var d2ABetter=cPrecoGordo>d2Be;
+
+  el('d2_a_lucro').textContent=moneyS(cLucro);
+  el('d2_a_lucro').className='kpi-v xl '+(cLucro>=0?'green':'red');
+  el('d2_a_cap').textContent=money(cCustoTotalCab)+' imobilizado';
+  el('d2_a_tempo').textContent=(cDias+cDiasFrig)+' dias até receber';
+  el('d2_b_margem').textContent=moneyS(d2MargemServ);
+  el('d2_b_capital').textContent=money(d2CapitalMagro)+' em caixa imediato';
+  el('d2_be').textContent='$'+d2Be.toFixed(2);
+
+  var d2RecEl=el('d2_rec');
+  d2RecEl.textContent=d2ABetter?'🏆 A SUPERIOR — gordo acima do break-even':'🏆 B SUPERIOR — gordo abaixo do break-even';
+  d2RecEl.className='kpi-v lg '+(d2ABetter?'gold':'green');
+
+  var d2Card_a=el('d2_card_a');
+  var d2Card_b=el('d2_card_b');
+  if(d2Card_a)d2Card_a.style.borderColor=d2ABetter?'#5a8a10':'#1a3a1a';
+  if(d2Card_b)d2Card_b.style.borderColor=!d2ABetter?'#2a8a2a':'#1a3a1a';
+
+  // Zona visual D2
+  var beMin2=d2Be*0.7,beMax2=d2Be*1.4;
+  var bePct2=Math.min(Math.max((d2Be-beMin2)/(beMax2-beMin2)*100,5),88);
+  var vPct2=Math.min(Math.max((cPrecoGordo-beMin2)/(beMax2-beMin2)*100,5),93);
+  set('d2_zona','<div class="zona"><div style="position:absolute;left:0;top:0;height:100%;width:'+bePct2+'%;background:linear-gradient(90deg,#001a0d,#0d3a20);display:flex;align-items:center;padding-left:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#4caf88">← B melhor</span></div><div style="position:absolute;right:0;top:0;height:100%;width:'+(100-bePct2)+'%;background:linear-gradient(90deg,#1a1400,#3a2800);display:flex;align-items:center;justify-content:flex-end;padding-right:10px"><span style="font-size:10px;font-weight:700;font-family:monospace;color:#c8a84b">A melhor →</span></div><div style="position:absolute;top:0;left:'+bePct2+'%;width:2px;height:100%;background:#fff;opacity:.4"></div><div style="position:absolute;top:6px;left:'+vPct2+'%;transform:translateX(-50%)"><div style="background:#fff;color:#000;font-size:9px;font-family:monospace;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">▼ $'+cPrecoGordo.toFixed(2)+'</div></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#3a5a3a;font-family:monospace;margin-top:3px"><span>$'+beMin2.toFixed(2)+'</span><span>BE: $'+d2Be.toFixed(2)+'</span><span>$'+beMax2.toFixed(2)+'</span></div>');
+
+  var sensH2='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;margin-bottom:6px;color:#3a6a3a;font-family:monospace;text-transform:uppercase;padding:0 4px"><span>Preço gordo</span><span style="text-align:right">Estratégia A</span><span style="text-align:right">Estratégia B</span><span style="text-align:right">Melhor</span></div>';
+  [-20,-10,0,10,20,30].forEach(function(pct_){
+    var pg=cPrecoGordo*(1+pct_/100);
+    var lucA=cCarcaca*pg-cCustoTotalCab;
+    var isBase=pct_===0;
+    var melhor=lucA>d2MargemServ?'A':'B';
+    sensH2+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:11px;padding:7px 4px;border-radius:6px;margin-bottom:3px;background:'+(isBase?'#0d2a0d':'transparent')+'"><span style="font-family:monospace;color:#7bc67e">$'+pg.toFixed(2)+' ('+(pct_>0?'+':'')+pct_+'%)</span><span style="text-align:right;font-family:monospace;color:'+(lucA>=0?'#7bc67e':'#e07070')+'">'+moneyS(lucA)+'</span><span style="text-align:right;font-family:monospace;color:#7bc67e">+'+money(d2MargemServ)+'</span><span style="text-align:right;font-family:monospace;color:'+(melhor==='A'?'#c8a84b':'#7bc67e')+'">'+melhor+'</span></div>';
+  });
+  set('d2_sens',sensH2);
+
+  // ── RESULTADO FINAL ──
+  var totalDias=rDias+cDias+cDiasFrig;
+  var totalMeses=totalDias/30.5;
+  var lucroTotal=rLucro+cLucro;
+  var capInicial=bCustoTotal;
+
+  // VPL simplificado: fluxo negativo no início + positivo no final, descontado
+  var taxaMes=Math.pow(1+jurosAA,1/12)-1;
+  var vplRecria=rReceita/Math.pow(1+jurosAA,rDias/365)-bCustoTotal-rCustoOp;
+  var vplConf=cReceita/Math.pow(1+jurosAA,(rDias+cDias+cDiasFrig)/365);
+  var vpl=(vplRecria+vplConf-bCustoTotal-rCustoOp-cCustoNutri-cCustoOp)-bCustoTotal;
+
+  // TIR approximada
+  var tir=lucroTotal>0?Math.pow(1+lucroTotal/capInicial,365/totalDias)-1:0;
+
+  // ROE
+  var roe=capInicial>0?(lucroTotal/capInicial)*100:0;
+
+  // Payback: mês 13 = recria; mais confinamento
+  var payback=totalMeses;
+
+  // Resumo global
+  el('g_res_entrada').textContent=money(bCustoTotal);
+  var rResEl=el('g_res_recria');rResEl.textContent=moneyS(rLucro);rResEl.className='kpi-v '+(rLucro>=0?'green':'red');
+  var cResEl=el('g_res_conf');cResEl.textContent=moneyS(cLucro);cResEl.className='kpi-v '+(cLucro>=0?'green':'red');
+  var tResEl=el('g_res_total');tResEl.textContent=moneyS(lucroTotal);tResEl.className='kpi-v xl '+(lucroTotal>=0?'green':'red');
+  var gRoeEl=el('g_roe');gRoeEl.textContent=pct(roe);gRoeEl.className='kpi-v lg '+(roe>=0?'green':'red');
+  var gTirEl=el('g_tir');gTirEl.textContent=pct(tir*100);gTirEl.className='kpi-v lg '+(tir>=0.08?'green':'red');
+  var gVplEl=el('g_vpl');gVplEl.textContent=moneyK(vpl);gVplEl.className='kpi-v lg '+(vpl>=0?'green':'red');
+  el('g_payback').textContent=totalMeses.toFixed(1)+'m';
+  el('g_tot_recria').textContent=moneyK(rLucro*escalaR);
+  el('g_tot_conf').textContent=moneyK(cLucro*escalaC);
+  el('g_cap_imob').textContent=moneyK(bCustoTotal*escalaR);
+  el('g_duracao').textContent=totalDias+'d / '+totalMeses.toFixed(1)+'m';
+
+  // Banner resultado final
+  var banClass=lucroTotal>=0?'ok':'bad';
+  var banH='<div class="banner '+banClass+'">';
+  [{l:'Entrada bezerro',v:money(bCustoTotal),c:'red'},{l:'Lucro recria/cab',v:moneyS(rLucro),c:rLucro>=0?'green':'red'},{l:'Lucro confinamento/cab',v:moneyS(cLucro),c:cLucro>=0?'green':'red'},{l:'LUCRO TOTAL/CAB',v:moneyS(lucroTotal),c:lucroTotal>=0?'green':'red',big:true}].forEach(function(item){
+    banH+='<div class="banner-item"><div class="bl">'+item.l+'</div><div class="bv" style="font-size:'+(item.big?'28px':'18px')+';color:'+(item.c==='green'?'#7bc67e':item.c==='red'?'#e07070':'#c8a84b')+'">'+item.v+'</div></div>';
+  });
+  banH+='</div>';
+  set('res_banner',banH);
+
+  // Indicadores finais
+  var resVplEl=el('res_vpl');resVplEl.textContent=moneyK(vpl);resVplEl.className='kpi-v lg '+(vpl>=0?'green':'red');
+  var resTirEl=el('res_tir');resTirEl.textContent=pct(tir*100);resTirEl.className='kpi-v lg '+(tir>=0.08?'gold':'red');
+  var resRoeEl=el('res_roe');resRoeEl.textContent=pct(roe);resRoeEl.className='kpi-v lg '+(roe>=0?'green':'red');
+  el('res_payback').textContent=totalMeses.toFixed(1)+' meses';
+
+  // Fluxo de caixa
+  var maxFluxo=Math.max(bCustoTotal,rReceita,cReceita);
+  var fluxos=[
+    {l:'M0 — Compra bezerro',v:-bCustoTotal,tipo:'saida'},
+    {l:'M1~'+Math.round(rMeses)+' — Custos recria',v:-(rCustoOp+rJuros),tipo:'saida'},
+    {l:'M'+Math.round(rMeses)+' — Venda magro',v:rReceita,tipo:'entrada'},
+    {l:'M'+Math.round(rMeses)+'~'+Math.round(rMeses+cMeses)+' — Custos conf.',v:-(cCustoNutri+cCustoOp+cJuros),tipo:'saida'},
+    {l:'M'+Math.round(rMeses+cMeses)+' — Venda gordo',v:cReceita,tipo:'entrada'},
+  ];
+  var fluxoH='';
+  fluxos.forEach(function(f){
+    var pct_=Math.min(Math.abs(f.v)/maxFluxo*100,100);
+    var col=f.tipo==='entrada'?'linear-gradient(90deg,#1a5a2a,#7bc67e)':'linear-gradient(90deg,#5a1a1a,#e07070)';
+    var textCol=f.tipo==='entrada'?'#000':'#fff';
+    fluxoH+='<div class="fluxo-row"><span class="fluxo-label">'+f.l+'</span><div class="fluxo-bar-wrap"><div class="fluxo-bar" style="width:'+pct_+'%;background:'+col+';color:'+textCol+'">'+moneyS(f.v)+'</div></div><span class="fluxo-val" style="color:'+(f.v>=0?'#7bc67e':'#e07070')+'">'+moneyS(f.v)+'</span></div>';
+  });
+  set('res_fluxo',fluxoH);
+
+  // Escala
+  el('res_r_cabs').textContent=escalaR.toLocaleString('pt-BR')+' cab/ano';
+  var rrTotEl=el('res_r_total');rrTotEl.textContent=moneyK(rLucro*escalaR);rrTotEl.className='kpi-v lg '+(rLucro>=0?'gold':'red');
+  el('res_r_cap').textContent=moneyK(bCustoTotal*escalaR);
+  el('res_c_cabs').textContent=escalaC.toLocaleString('pt-BR')+' cab/ciclo';
+  var rcTotEl=el('res_c_total');rcTotEl.textContent=moneyK(cLucro*escalaC);rcTotEl.className='kpi-v lg '+(cLucro>=0?'gold':'red');
+  el('res_c_cap').textContent=moneyK(cCustoEntrada*escalaC);
+
+  // Sensibilidade final
+  var varsens=[
+    {label:'Preço venda magro',base:rPrecoVenda,fn:function(x){var r2=rPesoSaida*x-bCustoTotal-rCustoOp-rJuros-rMortValor;return r2+cLucro;}},
+    {label:'GMD recria (g/dia)',base:rGmd*1000,fn:function(x){var pf2=bPeso+(x/1000)*rDias;var r2=pf2*rPrecoVenda-bCustoTotal-rCustoOp-rJuros-rMortValor;return r2+cLucro;}},
+    {label:'Preço bezerro (₲/kg)',base:bPrecoPyg,fn:function(x){var bc2=bPeso*(x/cambio)+bFrete+bComissao+bVet;var r2=rReceita-bc2-rCustoOp-bc2*jurosAA*(rDias/365)-bc2*mortRecria;return r2+cLucro;}},
+    {label:'Preço gordo (US$/kg carc)',base:cPrecoGordo,fn:function(x){var cR2=cCarcaca*x;return rLucro+(cR2-cCustoTotalCab);}},
+    {label:'GMD confinamento (g/dia)',base:cGmd*1000,fn:function(x){var pf2=cPesoIni+(x/1000)*cDias;var cc2=pf2*cRendFim;var cR2=cc2*cPrecoGordo;return rLucro+(cR2-cCustoTotalCab);}},
+  ];
+  var sensH='';
+  varsens.forEach(function(sv){
+    var baseLucro=sv.fn(sv.base);
+    var pessLucro=sv.fn(sv.base*0.88);
+    var otimLucro=sv.fn(sv.base*1.12);
+    var maxDelta=Math.max(Math.abs(pessLucro-baseLucro),Math.abs(otimLucro-baseLucro),1);
+    sensH+='<div class="sens-row" style="background:#071007;margin-bottom:6px"><span class="sens-label" style="min-width:200px">'+sv.label+'</span><div class="sens-vals"><span class="sens-val" style="color:#e07070">'+moneyS(pessLucro)+'</span><span class="sens-val" style="color:#c8a84b">'+moneyS(baseLucro)+'</span><span class="sens-val" style="color:#7bc67e">'+moneyS(otimLucro)+'</span></div></div>';
+  });
+  set('res_sens',sensH);
+
+  // Riscos
+  var riscosH='';
+  var riscos=[
+    {nivel:'ALTO',cor:'#e07070',titulo:'Queda no preço do magro',desc:'Variável mais sensível. Queda de 12% no preço do magro impacta diretamente a receita da recria e o custo de entrada do confinamento.'},
+    {nivel:'ALTO',cor:'#e07070',titulo:'GMD abaixo do projetado',desc:'GMD de recria abaixo de '+rGmd.toFixed(3)+'kg/dia reduz o peso de saída e compromete a rentabilidade do ciclo inteiro.'},
+    {nivel:'MÉDIO',cor:'#c8a84b',titulo:'Alta no preço do bezerro',desc:'Ágio atual de '+pct(Math.abs(bAgio))+'. Alta de 10% no bezerro impacta diretamente o capital imobilizado e os juros.'},
+    {nivel:'MÉDIO',cor:'#c8a84b',titulo:'Preço gordo abaixo do break-even',desc:'Break-even para confinar: $'+d1Be.toFixed(2)+'/kg PV. Preço atual: $'+cPrecoGordo.toFixed(2)+'/kg carc.'},
+    {nivel:'BAIXO',cor:'#7bc67e',titulo:'Mortalidade acima do previsto',desc:'Mortalidade projetada: '+pct(mortRecria*100,1)+' recria / '+pct(mortConf*100,1)+' confinamento. Monitorar sanidade e manejo.'},
+  ];
+  riscos.forEach(function(r){
+    riscosH+='<div class="cost-row"><span style="font-size:10px;font-weight:700;color:'+r.cor+';min-width:55px;font-family:monospace">'+r.nivel+'</span><div><div style="font-size:12px;font-weight:700;color:#c8e6c8;margin-bottom:2px">'+r.titulo+'</div><div style="font-size:11px;color:#3a6a3a">'+r.desc+'</div></div></div>';
+  });
+  set('res_riscos',riscosH);
+}
+
+// Init
+calc();
+</script>
+</body>
+</html>
